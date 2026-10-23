@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>债券计算工具：久期、凸性、关键期限久期、票息和骑乘 · 金正 · 宏观利率研究</title>
+<meta name="description" content="自己写的 Python 债券计算包，每个公式都有单元测试对着数值导数核对；用它每月算一次国债曲线各期限的票息加骑乘收益。">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="k-tool">
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="../../">金正<span>宏观利率研究</span></a>
+    <nav><a href="../../research/macro-vs-expectations/">研究</a><a href="../../notes/">点评</a><a href="../../reviews/">复盘</a><a href="../../tools/bond-analytics/" class=on>工具</a><a href="../../about/">关于</a></nav>
+  </div>
+</header>
+<main class="wrap">
+  <article>
+    <h1>债券计算工具：久期、凸性、关键期限久期、票息和骑乘</h1><p class="meta">工具 · 2026-10-23 · 曲线数据 2026-10-22</p>
+    <p>代码在 <a href="https://github.com/Joyzen2/bond-analytics">github.com/Joyzen2/bond-analytics</a>。能算的东西：</p>
+<ul>
+<li>固定利率债的全价、净价、应计利息、到期收益率；</li>
+<li>麦考利久期、修正久期、凸性、DV01，以及久期加凸性的价格近似；</li>
+<li>收益率曲线的插值、Nelson-Siegel 拟合、从平价收益率逐年剥离即期利率；</li>
+<li>关键期限久期：只动某一个期限附近的利率，价格变多少；</li>
+<li>票息和骑乘：持有一段时间、曲线形状不变时赚多少，以及盈亏平衡的利率上行幅度。</li>
+</ul>
+<p>12 个单元测试，核对的都是能独立验证的结论：平价债价格是 100，零息债的久期等于期限，久期和凸性与数值导数一致，剥离出的即期曲线能把平价债重新定价回 100，各关键期限久期加起来等于有效久期，等等。</p>
+<h2 id="_1">本月：国债曲线的票息加骑乘</h2>
+<figure class="chart"><svg class="vz" viewBox="0 0 460 232" role="img" xmlns="http://www.w3.org/2000/svg"><title>中债国债收益率曲线</title><desc>横轴按期限的平方根排布，方便看清短端。</desc><style>.vz text{font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;fill:#0b0b0b;}.vz .t2{fill:#52514e;}.vz .t3{fill:#898781;}.vz .grid{stroke:#e1e0d9;stroke-width:1;}.vz .base{stroke:#c3c2b7;stroke-width:1;}</style><line x1="0.0" y1="10.0" x2="16.0" y2="10.0" stroke="#2a78d6" stroke-width="2" stroke-linecap="round"/><text x="21.0" y="10.0" font-size="12" text-anchor="start" dominant-baseline="middle" class="t2">2026-10-22</text><line x1="109.0" y1="10.0" x2="125.0" y2="10.0" stroke="#eb6834" stroke-width="2" stroke-linecap="round"/><text x="130.0" y="10.0" font-size="12" text-anchor="start" dominant-baseline="middle" class="t2">一个月前（2026-09-22）</text><line x1="290.0" y1="10.0" x2="306.0" y2="10.0" stroke="#898781" stroke-width="2" stroke-linecap="round"/><text x="311.0" y="10.0" font-size="12" text-anchor="start" dominant-baseline="middle" class="t2">一年前（2025-10-22）</text><line x1="34.0" y1="185.8" x2="446.0" y2="185.8" class="grid"/><text x="28.0" y="185.8" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t3">1.2</text><line x1="34.0" y1="158.8" x2="446.0" y2="158.8" class="grid"/><text x="28.0" y="158.8" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t3">1.4</text><line x1="34.0" y1="131.8" x2="446.0" y2="131.8" class="grid"/><text x="28.0" y="131.8" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t3">1.6</text><line x1="34.0" y1="104.8" x2="446.0" y2="104.8" class="grid"/><text x="28.0" y="104.8" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t3">1.8</text><line x1="34.0" y1="77.8" x2="446.0" y2="77.8" class="grid"/><text x="28.0" y="77.8" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t3">2.0</text><line x1="34.0" y1="50.8" x2="446.0" y2="50.8" class="grid"/><text x="28.0" y="50.8" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t3">2.2</text><line x1="34.0" y1="206.0" x2="446.0" y2="206.0" class="base"/><text x="34.0" y="219.0" font-size="11.5" text-anchor="middle" dominant-baseline="middle" class="t3">3M</text><text x="75.4" y="219.0" font-size="11.5" text-anchor="middle" dominant-baseline="middle" class="t3">1Y</text><text x="136.0" y="219.0" font-size="11.5" text-anchor="middle" dominant-baseline="middle" class="t3">3Y</text><text x="177.7" y="219.0" font-size="11.5" text-anchor="middle" dominant-baseline="middle" class="t3">5Y</text><text x="211.6" y="219.0" font-size="11.5" text-anchor="middle" dominant-baseline="middle" class="t3">7Y</text><text x="254.4" y="219.0" font-size="11.5" text-anchor="middle" dominant-baseline="middle" class="t3">10Y</text><text x="446.0" y="219.0" font-size="11.5" text-anchor="middle" dominant-baseline="middle" class="t3">30Y</text><path d="M34.0,191.1L51.1,190.7L75.4,188.5L136.0,176.7L177.7,165.1L211.6,151.2L254.4,126.2L446.0,69.1" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="34.0" cy="191.1" r="3" fill="#2a78d6" stroke="#fcfcfb" stroke-width="1.5"><title>2026-10-22 3月：1.16%</title></circle><circle cx="51.1" cy="190.7" r="3" fill="#2a78d6" stroke="#fcfcfb" stroke-width="1.5"><title>2026-10-22 6月：1.16%</title></circle><circle cx="75.4" cy="188.5" r="3" fill="#2a78d6" stroke="#fcfcfb" stroke-width="1.5"><title>2026-10-22 1年：1.18%</title></circle><circle cx="136.0" cy="176.7" r="3" fill="#2a78d6" stroke="#fcfcfb" stroke-width="1.5"><title>2026-10-22 3年：1.27%</title></circle><circle cx="177.7" cy="165.1" r="3" fill="#2a78d6" stroke="#fcfcfb" stroke-width="1.5"><title>2026-10-22 5年：1.35%</title></circle><circle cx="211.6" cy="151.2" r="3" fill="#2a78d6" stroke="#fcfcfb" stroke-width="1.5"><title>2026-10-22 7年：1.46%</title></circle><circle cx="254.4" cy="126.2" r="3" fill="#2a78d6" stroke="#fcfcfb" stroke-width="1.5"><title>2026-10-22 10年：1.64%</title></circle><circle cx="446.0" cy="69.1" r="3" fill="#2a78d6" stroke="#fcfcfb" stroke-width="1.5"><title>2026-10-22 30年：2.06%</title></circle><path d="M34.0,187.6L51.1,186.4L75.4,181.5L136.0,174.3L177.7,158.0L211.6,145.0L254.4,121.1L446.0,62.8" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="34.0" cy="187.6" r="3" fill="#eb6834" stroke="#fcfcfb" stroke-width="1.5"><title>一个月前（2026-09-22） 3月：1.19%</title></circle><circle cx="51.1" cy="186.4" r="3" fill="#eb6834" stroke="#fcfcfb" stroke-width="1.5"><title>一个月前（2026-09-22） 6月：1.20%</title></circle><circle cx="75.4" cy="181.5" r="3" fill="#eb6834" stroke="#fcfcfb" stroke-width="1.5"><title>一个月前（2026-09-22） 1年：1.23%</title></circle><circle cx="136.0" cy="174.3" r="3" fill="#eb6834" stroke="#fcfcfb" stroke-width="1.5"><title>一个月前（2026-09-22） 3年：1.28%</title></circle><circle cx="177.7" cy="158.0" r="3" fill="#eb6834" stroke="#fcfcfb" stroke-width="1.5"><title>一个月前（2026-09-22） 5年：1.41%</title></circle><circle cx="211.6" cy="145.0" r="3" fill="#eb6834" stroke="#fcfcfb" stroke-width="1.5"><title>一个月前（2026-09-22） 7年：1.50%</title></circle><circle cx="254.4" cy="121.1" r="3" fill="#eb6834" stroke="#fcfcfb" stroke-width="1.5"><title>一个月前（2026-09-22） 10年：1.68%</title></circle><circle cx="446.0" cy="62.8" r="3" fill="#eb6834" stroke="#fcfcfb" stroke-width="1.5"><title>一个月前（2026-09-22） 30年：2.11%</title></circle><path d="M34.0,165.4L51.1,159.2L75.4,148.1L136.0,140.8L177.7,131.4L211.6,110.7L254.4,100.8L446.0,53.2" fill="none" stroke="#898781" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="34.0" cy="165.4" r="3" fill="#898781" stroke="#fcfcfb" stroke-width="1.5"><title>一年前（2025-10-22） 3月：1.35%</title></circle><circle cx="51.1" cy="159.2" r="3" fill="#898781" stroke="#fcfcfb" stroke-width="1.5"><title>一年前（2025-10-22） 6月：1.40%</title></circle><circle cx="75.4" cy="148.1" r="3" fill="#898781" stroke="#fcfcfb" stroke-width="1.5"><title>一年前（2025-10-22） 1年：1.48%</title></circle><circle cx="136.0" cy="140.8" r="3" fill="#898781" stroke="#fcfcfb" stroke-width="1.5"><title>一年前（2025-10-22） 3年：1.53%</title></circle><circle cx="177.7" cy="131.4" r="3" fill="#898781" stroke="#fcfcfb" stroke-width="1.5"><title>一年前（2025-10-22） 5年：1.60%</title></circle><circle cx="211.6" cy="110.7" r="3" fill="#898781" stroke="#fcfcfb" stroke-width="1.5"><title>一年前（2025-10-22） 7年：1.76%</title></circle><circle cx="254.4" cy="100.8" r="3" fill="#898781" stroke="#fcfcfb" stroke-width="1.5"><title>一年前（2025-10-22） 10年：1.83%</title></circle><circle cx="446.0" cy="53.2" r="3" fill="#898781" stroke="#fcfcfb" stroke-width="1.5"><title>一年前（2025-10-22） 30年：2.18%</title></circle><text x="28.0" y="32.0" font-size="11.5" text-anchor="end" dominant-baseline="auto" class="t3">%</text></svg><figcaption><b>图　中债国债收益率曲线</b><span class="fig-note">横轴按期限的平方根排布，方便看清短端。</span></figcaption></figure>
+<p>假设买入各期限的平价国债，持有 3 个月，曲线形状不变；资金成本按 7 天逆回购利率 1.40% 计。2026-10-22 的曲线：</p>
+<div class="table"><table>
+<thead>
+<tr>
+<th>期限</th>
+<th style="text-align: right;">到期收益率</th>
+<th style="text-align: right;">票息减资金成本</th>
+<th style="text-align: right;">骑乘</th>
+<th style="text-align: right;">合计</th>
+<th style="text-align: right;">修正久期</th>
+<th style="text-align: right;">盈亏平衡</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 年</td>
+<td style="text-align: right;">1.18%</td>
+<td style="text-align: right;">−5.6bp</td>
+<td style="text-align: right;">+0.7bp</td>
+<td style="text-align: right;">−4.9bp</td>
+<td style="text-align: right;">0.74</td>
+<td style="text-align: right;">−6.6bp</td>
+</tr>
+<tr>
+<td>2 年</td>
+<td style="text-align: right;">1.22%</td>
+<td style="text-align: right;">−4.6bp</td>
+<td style="text-align: right;">+1.9bp</td>
+<td style="text-align: right;">−2.7bp</td>
+<td style="text-align: right;">1.72</td>
+<td style="text-align: right;">−1.6bp</td>
+</tr>
+<tr>
+<td>3 年</td>
+<td style="text-align: right;">1.27%</td>
+<td style="text-align: right;">−3.5bp</td>
+<td style="text-align: right;">+3.0bp</td>
+<td style="text-align: right;">−0.5bp</td>
+<td style="text-align: right;">2.68</td>
+<td style="text-align: right;">−0.2bp</td>
+</tr>
+<tr>
+<td>5 年</td>
+<td style="text-align: right;">1.35%</td>
+<td style="text-align: right;">−1.3bp</td>
+<td style="text-align: right;">+5.3bp</td>
+<td style="text-align: right;">+3.9bp</td>
+<td style="text-align: right;">4.56</td>
+<td style="text-align: right;">+0.9bp</td>
+</tr>
+<tr>
+<td>7 年</td>
+<td style="text-align: right;">1.46%</td>
+<td style="text-align: right;">+1.2bp</td>
+<td style="text-align: right;">+8.8bp</td>
+<td style="text-align: right;">+10.0bp</td>
+<td style="text-align: right;">6.36</td>
+<td style="text-align: right;">+1.6bp</td>
+</tr>
+<tr>
+<td>10 年</td>
+<td style="text-align: right;">1.64%</td>
+<td style="text-align: right;">+5.8bp</td>
+<td style="text-align: right;">+9.0bp</td>
+<td style="text-align: right;">+14.8bp</td>
+<td style="text-align: right;">8.91</td>
+<td style="text-align: right;">+1.7bp</td>
+</tr>
+</tbody>
+</table></div>
+<p>怎么读：</p>
+<ul>
+<li><strong>短端是负票息</strong>。1–3 年国债的收益率低于 1.40% 的资金成本，加杠杆持有每个月都在亏利息，靠骑乘也补不回来。</li>
+<li><strong>7–10 年这一段票息加骑乘最厚</strong>。10 年国债持有 3 个月约 +14.8bp，六成来自骑乘：7–10 年之间曲线比较陡，剩余期限变短以后收益率会「滑」下来。</li>
+<li><strong>但安全垫很薄</strong>。盈亏平衡只有 1.7bp：3 个月里 10 年国债收益率上行超过约 1.7bp，这笔收益就被吃掉了。低利率、曲线不陡的时候，票息保护不了多少。</li>
+<li>30 年不算：这条曲线在 10 年和 30 年之间没有报价点，那一段的骑乘对插值方法太敏感，算不准。</li>
+</ul>
+<h2 id="_2">这些概念</h2>
+<ul>
+<li><strong>修正久期</strong>：收益率变动 1 个百分点，价格大约变动百分之几。10 年国债修正久期约 8.9，收益率上行 10bp，价格大约跌 0.89%。</li>
+<li><strong>凸性</strong>：价格和收益率的关系是弯的，收益率变动越大，只用久期估的误差越大。价格变动 ≈ 价格 ×（−久期 × Δy + ½ × 凸性 × Δy²）。</li>
+<li><strong>DV01</strong>：收益率下行 1bp，每 100 元面值的价格涨多少元；等于修正久期 × 价格 × 0.0001。</li>
+<li><strong>关键期限久期</strong>：只动某一个期限附近的即期利率，比如只动 5 年，价格变多少。它能看出一个组合到底暴露在曲线的哪一段，各期限加起来约等于整体的久期。</li>
+<li><strong>票息和骑乘</strong>：持有收益 =（票息 − 资金成本）× 持有期 + 骑乘。骑乘来自曲线向上倾斜：持有一段时间，剩余期限变短，按曲线上更短期限的收益率重新定价，价格上涨。盈亏平衡 = 两部分之和 ÷（修正久期 × 价格）。</li>
+</ul>
+<h2 id="_3">说明</h2>
+<ul>
+<li>都按每年付息一次的平价债近似；实际的国债有具体的票面利率和付息日，结果会略有不同。</li>
+<li>资金成本用 7 天逆回购利率近似；实际做杠杆用的是质押式回购（比如 DR007），会有几个基点的差别。</li>
+<li>曲线数据来自中债国债收益率曲线。</li>
+</ul>
+  </article>
+</main>
+<footer class="foot">
+  <div class="wrap">
+    <p>框架是 2025 年在中诚信托实习时搭的；这里的研究是实习结束后用公开数据和学校 CSMAR 数据库重建、延伸的，不含任何公司数据。规则在看结果之前写定，事后的修改都标明是修正。</p>
+    <p>金正 · <a href="mailto:zheng.jin20@student.xjtlu.edu.cn">zheng.jin20@student.xjtlu.edu.cn</a> · <a href="https://github.com/Joyzen2">github.com/Joyzen2</a></p>
+  </div>
+</footer>
+</body>
+</html>

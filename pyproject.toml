@@ -3,7 +3,11 @@ name = "joyzen2-site"
 version = "0.1.0"
 description = "金正的宏观利率研究网站：Markdown 生成静态网页"
 requires-python = ">=3.12"
-dependencies = ["markdown>=3.7"]
+dependencies = [
+    "brotli>=1.2.1",
+    "fonttools>=4.67.0",
+    "markdown>=3.7",
+]
 
 [tool.uv]
 package = false

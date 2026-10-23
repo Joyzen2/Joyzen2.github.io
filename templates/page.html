@@ -5,23 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{title}}</title>
 <meta name="description" content="{{description}}">
+<link rel="preload" href="{{root}}assets/fonts/jz-display.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{{root}}assets/style.css">
 </head>
 <body class="k-{{kind}}">
 <header class="top">
   <div class="wrap">
-    <a class="brand" href="{{root}}">金正<span>宏观利率研究</span></a>
-    <nav>{{nav}}</nav>
+    <a class="brand" href="{{root}}"><span class="brand-name">金正</span><span class="brand-sub">宏观利率研究</span></a>
+    <nav aria-label="栏目">{{nav}}</nav>
   </div>
+  <div class="wrap"><div class="top-rule"></div></div>
 </header>
 <main class="wrap">
-  <article>
-    {{header}}
-    {{content}}
-  </article>
+{{body}}
 </main>
 <footer class="foot">
   <div class="wrap">
+    <div class="ruler" aria-hidden="true"></div>
     <p>框架是 2025 年在中诚信托实习时搭的；这里的研究是实习结束后用公开数据和学校 CSMAR 数据库重建、延伸的，不含任何公司数据。规则在看结果之前写定，事后的修改都标明是修正。</p>
     <p>金正 · <a href="mailto:zheng.jin20@student.xjtlu.edu.cn">zheng.jin20@student.xjtlu.edu.cn</a> · <a href="https://github.com/Joyzen2">github.com/Joyzen2</a></p>
   </div>

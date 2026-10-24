@@ -47,7 +47,7 @@ summary: 金正的宏观利率研究：宏观信息在市场价格之外，能�
 <section class="band">
 <div class="ruler" aria-hidden="true"></div>
 <div class="band-head"><h2>持续跟踪</h2><a href="notes/">全部点评</a></div>
-<p class="band-lede">每次重要的数据和政策发布写一页：公布值和一致预期比、意外多大、利率当天怎么动，最后是我的判断。判断错了也留着，之后复盘。</p>
+<p class="band-lede">每次重要的数据和政策发布写一页：公布值和一致预期比、意外多大、利率当天怎么动，最后是我的判断；每周五再写一页资金面。判断错了也留着，之后复盘。</p>
 {{list:note}}
 </section>
 

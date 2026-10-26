@@ -51,3 +51,6 @@
   .creative-page .journey-wordmark, .creative-page .journey-face-foot svg, .creative-page .journey-dot { transform: none !important; transition: none; }
   .creative-page .journey-flip-wrap .flip-card__face::after { transition: opacity .15s ease; }
 }
+
+/* Balance the numeric wordmark with the other experience cards. */
+.creative-page .journey-wordmark-3 { font-size: clamp(42px, 3.2vw, 54px); }

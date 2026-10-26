@@ -90,7 +90,7 @@ const detailContent = {
     methods: 'AI 投研工程 · 时点资料 · 工具接口 · 上线检查',
     boundary: '当前展示围绕时点资料、工具取证与上线检查的工程流程，持续迭代研究输出的可追踪性。',
     link: AI_SITE,
-    linkLabel: '进入项目网站',
+    linkLabel: '进入 AI 投研工程开发网站',
   },
   splint: {
     title: '医用智能骨科夹板 Smart Splint',

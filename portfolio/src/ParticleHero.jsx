@@ -85,7 +85,7 @@ export default function ParticleHero() {
     <div className="particle-bottom">
       <a href={MACRO} target="_blank" rel="noreferrer" className="particle-field"><span>宏观利率</span><span>MACRO & RATES</span><Arrow /></a>
       <a href="#work" className="particle-field"><span>量化策略</span><span>QUANTITATIVE RESEARCH</span><Arrow /></a>
-      <a href="#work" className="particle-field"><span>AI 投研工具</span><span>RESEARCH AGENTS</span><Arrow /></a>
+      <a href="https://joyzen2.github.io/ai-research/" target="_blank" rel="noreferrer" className="particle-field"><span>AI 投研工具</span><span>RESEARCH AGENTS</span><Arrow /></a>
       <button className="particle-playback" onClick={togglePlayback} disabled={failed || reduced} aria-label={failed ? '背景使用静态封面' : reduced ? '已按系统设置减少动态效果' : playing ? '暂停背景动画' : '播放背景动画'}>
         {playing && !reduced ? <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3v10M11 3v10" stroke="currentColor" strokeWidth="1.5" /></svg> : <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m5 3 8 5-8 5z" fill="currentColor" /></svg>}
         <span>{failed || reduced ? '静态' : playing ? '暂停' : '播放'}</span>

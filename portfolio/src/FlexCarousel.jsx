@@ -494,9 +494,10 @@ const FlexCarousel = ({
           const art = document.createElement('canvas');
           art.width = 1200; art.height = 900;
           const ctx = art.getContext('2d');
-          const scale = Math.max(1200 / image.naturalWidth, 900 / image.naturalHeight);
+          const scale = (item.imageFit === 'contain' ? Math.min : Math.max)(1200 / image.naturalWidth, 900 / image.naturalHeight);
           const iw = image.naturalWidth * scale, ih = image.naturalHeight * scale;
-          ctx.drawImage(image, (1200 - iw) / 2, (900 - ih) / 2, iw, ih);
+          ctx.fillStyle = '#101010'; ctx.fillRect(0, 0, 1200, 900);
+          ctx.drawImage(image, (1200 - iw) * (item.imagePositionX ?? .5), (900 - ih) / 2, iw, ih);
           ctx.fillStyle = 'rgba(0, 0, 0, .28)'; ctx.fillRect(0, 0, 1200, 900);
           const gradient = ctx.createLinearGradient(0, 240, 0, 900);
           gradient.addColorStop(0, 'rgba(0,0,0,0)'); gradient.addColorStop(1, 'rgba(0,0,0,.98)');

@@ -35,3 +35,8 @@ ProfileCard implementation adapted from the source in user attachment `7f3e0bf9-
 User canceled the graduation-style composite and asked for another web-sourced photo. Active scholarship cover is now `recognition/xjtlu-central-building.webp`, converted from the unchanged official JPEG https://www.xjtlu.edu.cn/wp-content/uploads/2026/04/central-building.jpg (university website). It is campus context imagery, not scholarship presentation evidence. Campus facade crop visually checked in expanded card, 600px image loaded; prior composites retained but no longer referenced by the site.
 
 `recognition/competition-emblem-alpha.png` is an imagegen-assisted cutout of the supplied opaque JPG (clipboard 6f3bf9af-2fd6-41db-bc40-2242bfde9f6a). Retains the 2025 mark, date 2025年5月24日 and location 中国·常州·西太湖; surrounding blue field/separator removed for alpha compositing. PNG has a real alpha channel. Generated master: `exec-c648187d-e091-41f7-96a1-9dc71bac864c.png`. Final logo/copy combination visually checked in the competition card.
+
+
+## Research cover refresh
+- work/ai-engineering-code.webp: code-development photograph from https://images.unsplash.com/photo-1555066931-4365d14bab8c (thematic stock photo, not this project's code screenshot). Converted to WebP.
+- work/hand-xray.webp: normal left-hand radiograph by Mikael Häggström, M.D., CC0 1.0, https://commons.wikimedia.org/wiki/File:X-ray_of_normal_hand_by_dorsoplantar_projection.jpg . Resized and converted to WebP. Generic anatomy illustration, not the owner's patients, prototype or experimental results.

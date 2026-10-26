@@ -40,3 +40,5 @@ User canceled the graduation-style composite and asked for another web-sourced p
 ## Research cover refresh
 - work/ai-engineering-code.webp: code-development photograph from https://images.unsplash.com/photo-1555066931-4365d14bab8c (thematic stock photo, not this project's code screenshot). Converted to WebP.
 - work/hand-xray.webp: normal left-hand radiograph by Mikael Häggström, M.D., CC0 1.0, https://commons.wikimedia.org/wiki/File:X-ray_of_normal_hand_by_dorsoplantar_projection.jpg . Resized and converted to WebP. Generic anatomy illustration, not the owner's patients, prototype or experimental results.
+
+- work/smart-splint-cutout.webp: transparent cutout of the user-supplied Smart Splint image (clipboard 27110525). Gray background removed with built-in imagegen; subject composition preserved as editing target. Genuine alpha retained in WebP. Supersedes the generic hand X-ray cover.

@@ -61,3 +61,8 @@
 .creative-page .research-carousel-stage .flex-carousel__caption{top:calc(50% + var(--flex-carousel-half) + 12px)}.creative-page .research-carousel-stage .flex-carousel__count{display:none}.research-navigation{align-items:center}.research-navigation>span{font-size:11px;color:#aaa;font-variant-numeric:tabular-nums;min-width:38px;text-align:center}
 
 .creative-page .research-carousel-stage{height:clamp(480px,62svh,660px)}@media(max-width:760px){.creative-page .research-carousel-stage{height:430px}}
+
+/* Larger recognition cards and a 1.5x taller macro feature, requested by the owner. */
+.creative-page .recognition-stage{height:clamp(530px,40vw,650px)}
+.creative-page .macro-reflective .macro-art{height:clamp(540px,78svh,840px)}
+@media(max-width:760px){.creative-page .recognition-stage{height:490px}.creative-page .macro-reflective .macro-art{height:548px}}

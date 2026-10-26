@@ -170,7 +170,7 @@ function Awards() {
     <div className="shell"><SectionHeading id="awards-title" english="RECOGNITION">探索留下的印记。</SectionHeading>
       <div className="recognition-toolbar"><p>拖动浏览，点击展开卡片。</p><button className="gallery-pause" onClick={() => setPaused(!paused)} aria-pressed={paused}>{paused ? '继续缓慢流动' : '暂停自动流动'}</button></div>
     </div>
-    <div className="recognition-stage"><CircularGallery items={recognitionItems} navigation={navigation} bend={2.6} itemSize={1.05} itemAspect={0.8} gap={0.16} wave={0.3} borderRadius={0.025} fadeEdges={0.06} shadow={0.12} font='400 25px Manrope, "PingFang SC", sans-serif' autoScroll={paused ? 0 : 0.35} scrollEase={0.065} dpr={1.5} onActiveChange={setActive} /></div>
+    <div className="recognition-stage"><CircularGallery items={recognitionItems} navigation={navigation} bend={2.6} itemSize={1.15} itemAspect={0.8} gap={0.16} wave={0.3} borderRadius={0.025} fadeEdges={0.06} shadow={0.12} font='400 25px Manrope, "PingFang SC", sans-serif' autoScroll={paused ? 0 : 0.35} scrollEase={0.065} dpr={1.5} onActiveChange={setActive} /></div>
     <div className="shell recognition-bottom">
       <div className="recognition-index" aria-label="选择成果">{recognitionItems.map((entry, index) => <button key={entry.text} onClick={() => navigate(index)} aria-pressed={index === active}><span>{String(index + 1).padStart(2, '0')}</span>{entry.text}</button>)}</div>
       <div className="recognition-detail" aria-live="polite" aria-atomic="true"><div><h3>{item.title}</h3><p>{item.description}</p></div><div className="recognition-evidence"><span>{item.detail}</span>{item.href && <External href={item.href} className="text-link">{active === 4 ? '查看专利记录' : '阅读论文'} <Arrow /></External>}</div></div>

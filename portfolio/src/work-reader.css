@@ -59,3 +59,5 @@
 @media(max-width:760px){.creative-page .macro-reflective .macro-art{height:365px;grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr) auto;gap:14px;padding:23px 22px 18px}.creative-page .macro-reflective .art-heading{display:block}.creative-page .macro-reflective .art-heading>.macro-card-title{font-size:24px}.creative-page .macro-reflective .macro-art img{height:100%;max-height:none}.creative-page .research-carousel-stage{height:420px}.research-navigation{margin-top:8px}}
 
 .creative-page .research-carousel-stage .flex-carousel__caption{top:calc(50% + var(--flex-carousel-half) + 12px)}.creative-page .research-carousel-stage .flex-carousel__count{display:none}.research-navigation{align-items:center}.research-navigation>span{font-size:11px;color:#aaa;font-variant-numeric:tabular-nums;min-width:38px;text-align:center}
+
+.creative-page .research-carousel-stage{height:clamp(480px,62svh,660px)}@media(max-width:760px){.creative-page .research-carousel-stage{height:430px}}

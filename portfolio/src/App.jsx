@@ -140,7 +140,7 @@ function ProjectDetail({ kind, close }) {
 
 function Work() {
   const [open, setOpen] = useState(null);
-  return <section className="work section-space" id="work" aria-labelledby="work-title" data-motion-section><div className="shell"><SectionHeading id="work-title" english="SELECTED WORK">把问题，做成研究。</SectionHeading><p className="section-intro">以宏观为主线，沿着组合、文本与 AI 工具继续探索。</p>
+  return <section className="work section-space" id="work" aria-labelledby="work-title" data-motion-section><div className="shell"><SectionHeading id="work-title" english="SELECTED WORK">把问题，做成研究。</SectionHeading>
     <External className="project-featured" href={MACRO} aria-label="进入宏观信息与市场预期研究站（新窗口）"><ReflectiveCard className="macro-reflective" width="100%" height="auto" theme="dark" webcam={false} intro={false} tint="#ffffff" metalness={0.72} roughness={0.5} blurStrength={6} shine={0.55} glare={0.18} tiltStrength={2.3} radius={16}><MacroArt /></ReflectiveCard><div className="project-description"><div><span className="project-category">宏观量化 · 利率研究</span><h3>宏观信息，何时能带来增量？</h3><p>从实时状态识别，到政策与数据意外。研究宏观判断与市场定价之间的距离。</p></div><span className="project-action">进入研究站 <Arrow /></span></div></External>
     <ResearchCarousel onSelect={kind => setOpen(kind)} />
     {open && <ProjectDetail kind={open} close={() => setOpen(null)} />}

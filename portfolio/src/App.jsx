@@ -56,7 +56,7 @@ function About() {
 }
 
 function MacroArt() {
-  return <div className="macro-art"><div className="art-heading"><span>MACRO<br />& EXPECTATIONS</span><span className="art-description">从宏观信息<br />到市场定价</span></div><img src={media('macro-curve-dark.svg')} alt="2022年8月15日政策公告前后国债收益率曲线，来源于现有宏观研究站" loading="lazy" /><div className="art-caption"><span>政策事件 · 收益率曲线</span><span>原研究图表</span></div></div>;
+  return <div className="macro-art"><div className="art-heading"><span className="macro-card-title">从宏观信息到市场定价</span></div><img src={media('macro-curve-dark.svg')} alt="2022年8月15日政策公告前后国债收益率曲线，来源于现有宏观研究站" loading="lazy" /><div className="art-caption"><span>政策事件 · 收益率曲线</span><span>原研究图表</span></div></div>;
 }
 
 const detailContent = {

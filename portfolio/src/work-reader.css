@@ -45,3 +45,17 @@
 @media(prefers-reduced-motion:reduce){.reader-close,.reader-link .arrow{transition:none}.reader-close:hover,.reader-link:hover .arrow{transform:none}}
 
 .reader-facts dd.reader-fact-long{font-size:18px;line-height:1.8}@media(max-width:760px){.reader-facts dd.reader-fact-long{font-size:12px;line-height:2.2}}
+
+/* Requested stacked macro composition and larger research covers. */
+.creative-page .macro-reflective .macro-art{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr) auto;gap:16px;height:clamp(360px,52svh,560px);padding:28px 38px 20px}
+.creative-page .macro-reflective .art-heading{display:block}
+.creative-page .macro-reflective .art-heading>.macro-card-title{font-family:var(--display);font-size:clamp(25px,2.8vw,38px);line-height:1.45;letter-spacing:-.02em}
+.creative-page .macro-reflective .macro-art img{height:100%;max-height:none;width:100%;object-fit:contain}
+.creative-page .research-carousel-stage{height:clamp(440px,62svh,620px)}
+.research-navigation{display:flex;justify-content:center;gap:12px;margin-top:12px}
+.research-navigation button{display:grid;place-items:center;width:44px;height:44px;border:1px solid #444;border-radius:50%;background:transparent;color:#ddd;transition:background .25s,border-color .25s}
+.research-navigation button:hover{background:#222;border-color:#aaa}
+.research-navigation svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.4}
+@media(max-width:760px){.creative-page .macro-reflective .macro-art{height:365px;grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr) auto;gap:14px;padding:23px 22px 18px}.creative-page .macro-reflective .art-heading{display:block}.creative-page .macro-reflective .art-heading>.macro-card-title{font-size:24px}.creative-page .macro-reflective .macro-art img{height:100%;max-height:none}.creative-page .research-carousel-stage{height:420px}.research-navigation{margin-top:8px}}
+
+.creative-page .research-carousel-stage .flex-carousel__caption{top:calc(50% + var(--flex-carousel-half) + 12px)}.creative-page .research-carousel-stage .flex-carousel__count{display:none}.research-navigation{align-items:center}.research-navigation>span{font-size:11px;color:#aaa;font-variant-numeric:tabular-nums;min-width:38px;text-align:center}

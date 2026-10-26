@@ -16,11 +16,11 @@ export default function ResearchCarousel({ onSelect }) {
   const [compact, setCompact] = useState(() => window.matchMedia('(max-width: 760px)').matches);
   useEffect(() => { const query = window.matchMedia('(max-width: 760px)'); const update = () => setCompact(query.matches); query.addEventListener('change', update); return () => query.removeEventListener('change', update); }, []);
   const [navigation, setNavigation] = useState(null);
-  function choose(index) { setSelected(index); setActive(index); setNavigation({ index, tick: performance.now() }); onSelect(items[index].kind); }
+  function navigate(direction) { const index = (active + direction + items.length) % items.length; setNavigation({ index, tick: performance.now() }); }
   return <div className="research-carousel">
     <div className="research-carousel-intro"><h3>量化 AI 研究与开发</h3><p>拖动切换，点击卡片聚焦并查看研究。</p></div>
-    <div className="research-carousel-stage"><Suspense fallback={<div className="work-loading" role="status">研究作品载入中…</div>}><FlexCarousel items={items} navigation={navigation} preset="liquid" intro="rise" fit="landscape" cardHeight={compact ? 0.52 : 0.6} gap={22} radius={12} bend={0.22} dispersion={0.16} squeeze={0.1} captureWheel={false} captions focusOnClick={false} onChange={setActive} onSelect={index => { setSelected(index); onSelect(items[index].kind); }} /></Suspense></div>
-    <div className="research-project-tabs" aria-label="选择精选项目">{items.map((item, index) => <button key={item.kind} onClick={() => choose(index)} aria-pressed={active === index} aria-controls={`detail-${item.kind}`}><span>{String(index + 1).padStart(2, '0')}</span><strong>{item.title}</strong></button>)}</div>
+    <div className="research-carousel-stage"><Suspense fallback={<div className="work-loading" role="status">研究作品载入中…</div>}><FlexCarousel items={items} navigation={navigation} preset="liquid" intro="rise" fit="landscape" cardHeight={compact ? 0.64 : 0.7} gap={22} radius={12} bend={0.22} dispersion={0.16} squeeze={0.1} captureWheel={false} captions focusOnClick={false} onChange={index => { setActive(index); setSelected(index); }} onSelect={index => { setSelected(index); onSelect(items[index].kind); }} /></Suspense></div>
+    <div className="research-navigation" aria-label="轮播导航"><button onClick={() => navigate(-1)} aria-label="上一个项目"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H4m6-6-6 6 6 6"/></svg></button><span aria-live="polite">{active + 1} / {items.length}</span><button onClick={() => navigate(1)} aria-label="下一个项目"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></button></div>
     {items[selected].href && <div className="research-site-entry"><a href={items[selected].href} target="_blank" rel="noreferrer">进入 {items[selected].title} 网站 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></a></div>}
   </div>;
 }

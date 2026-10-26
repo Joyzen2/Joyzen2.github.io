@@ -9,7 +9,8 @@ import ProfileCard from './ProfileCard.jsx';
 const ExperienceJourney = lazy(() => import('./ExperienceJourney.jsx'));
 import './profile-journey.css';
 import './monochrome.css';
-import ResearchCarousel from './ResearchCarousel.jsx';
+import ResearchCarousel, { researchItems } from './ResearchCarousel.jsx';
+import './work-reader.css';
 import SplitText from './SplitText.jsx';
 import ReflectiveCard from './ReflectiveCard.jsx';
 import './macro-reflective.css';
@@ -108,30 +109,47 @@ const detailContent = {
 
 function ProjectDetail({ kind, close }) {
   const d = detailContent[kind];
-  return <div className="project-detail" id={`detail-${kind}`} tabIndex="-1"><div className="detail-top"><h4>{d.title}</h4><button onClick={close} className="close-detail">收起 <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 6 8 8M14 6l-8 8" stroke="currentColor" strokeWidth="1.5" /></svg></button></div><p>{d.intro}</p><dl className="detail-facts">{d.facts.map(([n, label]) => <div key={label}><dt>{label}</dt><dd>{n}</dd></div>)}</dl><p className="detail-methods">{d.methods}</p><p className="detail-boundary">{d.boundary}</p>{d.link ? <External href={d.link} className="text-link">{d.linkLabel || '查看项目代码'} <Arrow /></External> : <a className="text-link" href={`mailto:${EMAIL}?subject=${encodeURIComponent(`想了解${d.title}`)}`}>联系我了解研究 <Arrow /></a>}</div>;
+  const item = researchItems.find(item => item.kind === kind);
+  const dialog = useRef(null);
+  useEffect(() => {
+    const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    const node = dialog.current;
+    node.showModal();
+    document.body.style.overflow = 'hidden';
+    return () => {
+      node.close();
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus({ preventScroll: true });
+    };
+  }, []);
+  return <dialog ref={dialog} className="project-reader" id={`detail-${kind}`} aria-labelledby={`reader-title-${kind}`} onCancel={event => { event.preventDefault(); close(); }} onClick={event => { if (event.target === event.currentTarget) close(); }}>
+    <div className="reader-layout">
+      <figure className={`reader-visual reader-visual-${kind}`}><img src={item.src} alt={item.alt} /></figure>
+      <div className="reader-content">
+        <header className="reader-heading"><h2 id={`reader-title-${kind}`}>{d.title}</h2><button type="button" className="reader-close" onClick={close} aria-label="关闭项目介绍" autoFocus><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>
+        <p className="reader-intro">{d.intro}</p>
+        <dl className="reader-facts">{d.facts.map(([n, label]) => <div key={label}><dt>{label}</dt><dd className={n.length > 10 ? 'reader-fact-long' : undefined}>{n}</dd></div>)}</dl>
+        <p className="reader-methods">{d.methods}</p>
+        <details className="reader-boundary"><summary>研究口径与边界</summary><p>{d.boundary}</p></details>
+        {d.link ? <External href={d.link} className="reader-link">{d.linkLabel || '查看项目代码'} <Arrow /></External> : <a className="reader-link" href={`mailto:${EMAIL}?subject=${encodeURIComponent(`想了解${d.title}`)}`}>联系我了解研究 <Arrow /></a>}
+      </div>
+    </div>
+  </dialog>;
 }
 
 function Work() {
   const [open, setOpen] = useState(null);
-  useEffect(() => {
-    if (open) document.getElementById(`detail-${open}`)?.focus({ preventScroll: true });
-    const frame = requestAnimationFrame(() => window.dispatchEvent(new Event('portfolio:layout')));
-    return () => cancelAnimationFrame(frame);
-  }, [open]);
-  const toggle = (kind) => {
-    const next = open === kind ? null : kind;
-    setOpen(next);
-  };
   return <section className="work section-space" id="work" aria-labelledby="work-title" data-motion-section><div className="shell"><SectionHeading id="work-title" english="SELECTED WORK">把问题，做成研究。</SectionHeading><p className="section-intro">以宏观为主线，沿着组合、文本与 AI 工具继续探索。</p>
     <External className="project-featured" href={MACRO} aria-label="进入宏观信息与市场预期研究站（新窗口）"><ReflectiveCard className="macro-reflective" width="100%" height="auto" theme="dark" webcam={false} intro={false} tint="#ffffff" metalness={0.72} roughness={0.5} blurStrength={6} shine={0.55} glare={0.18} tiltStrength={2.3} radius={16}><MacroArt /></ReflectiveCard><div className="project-description"><div><span className="project-category">宏观量化 · 利率研究</span><h3>宏观信息，何时能带来增量？</h3><p>从实时状态识别，到政策与数据意外。研究宏观判断与市场定价之间的距离。</p></div><span className="project-action">进入研究站 <Arrow /></span></div></External>
     <ResearchCarousel onSelect={kind => setOpen(kind)} />
-    {open && <ProjectDetail kind={open} close={() => { setOpen(null); document.querySelector(`[aria-controls="detail-${open}"]`)?.focus(); }} />}
+    {open && <ProjectDetail kind={open} close={() => setOpen(null)} />}
     <div className="work-bottom"><span>研究结论、方法与边界，都值得被看见。</span><External href={GITHUB} className="text-link">更多代码与研究 <Arrow /></External></div>
   </div></section>;
 }
 
 function Notes() {
-  return <section className="notes section-space" id="notes" aria-labelledby="notes-title" data-motion-section><div className="shell"><SectionHeading id="notes-title" english="RESEARCH NOTES">研究之外，持续记录。</SectionHeading><p className="section-intro">把每一次追问，留成下一次研究的起点。</p><div className="note-list"><External href={`${MACRO}notes/2026-10-24-funding/`} className="note-row"><span className="note-type">资金面跟踪</span><h3>从资金价格与公开市场操作，观察流动性。</h3><span className="note-date">2026.10.24</span><Arrow /></External><External href={`${MACRO}reviews/lpr-follow-cuts/`} className="note-row"><span className="note-type">政策专题</span><h3>同样是降息，为什么市场反应不同？</h3><span className="note-date">专题复盘</span><Arrow /></External><External href={`${MACRO}tools/bond-analytics/`} className="note-row"><span className="note-type">研究工具</span><h3>从久期到骑乘，把债券分析变成可复算的工具。</h3><span className="note-date">Python</span><Arrow /></External></div><div className="notes-end"><p>公开笔记持续整理，完整研究可在宏观研究站阅读。</p><External href={`${MACRO}notes/`} className="text-link">查看研究笔记 <Arrow /></External></div></div></section>;
+  return <section className="notes section-space" id="notes" aria-labelledby="notes-title" data-motion-section><div className="shell"><SectionHeading id="notes-title" english="RESEARCH NOTES">研究之外，持续记录。</SectionHeading><p className="section-intro">把每一次追问，留成下一次研究的起点。</p><div className="note-list"><External href={`/notes/2026-10-24-funding/`} className="note-row"><span className="note-type">资金面跟踪</span><h3>从资金价格与公开市场操作，观察流动性。</h3><span className="note-date">2026.10.24</span><Arrow /></External><External href={`/reviews/lpr-follow-cuts/`} className="note-row"><span className="note-type">政策专题</span><h3>同样是降息，为什么市场反应不同？</h3><span className="note-date">专题复盘</span><Arrow /></External><External href={`/tools/bond-analytics/`} className="note-row"><span className="note-type">研究工具</span><h3>从久期到骑乘，把债券分析变成可复算的工具。</h3><span className="note-date">Python</span><Arrow /></External></div><div className="notes-end"><p>公开笔记持续整理，完整研究可在宏观研究站阅读。</p><External href={`/notes/`} className="text-link">查看研究笔记 <Arrow /></External></div></div></section>;
 }
 
 const recognitionItems = [

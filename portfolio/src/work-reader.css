@@ -1,0 +1,47 @@
+/* Compact, viewport-aware work opening and a unified project reader. */
+.creative-page .recognition-section{padding-bottom:32px}
+.creative-page .recognition-detail{min-height:112px;padding-top:23px}
+.creative-page .work.section-space{padding-top:54px}
+.creative-page .work .section-title-block{margin-bottom:29px}
+.creative-page .work .project-featured{margin-top:28px}
+.creative-page .macro-reflective .macro-art{display:grid;grid-template-columns:.85fr 1.15fr;grid-template-rows:1fr auto;gap:18px 35px;align-items:center;height:clamp(290px,40svh,430px);padding:30px 40px 20px}
+.creative-page .macro-reflective .art-heading{display:flex;flex-direction:column;gap:20px}
+.creative-page .macro-reflective .art-heading>span:first-child{font-size:clamp(30px,3.4vw,53px);line-height:1.12}
+.creative-page .macro-reflective .art-description{text-align:left;font-size:17px;line-height:1.65}
+.creative-page .macro-reflective .macro-art img{width:100%;height:100%;max-height:275px;object-fit:contain;margin:0;min-height:0}
+.creative-page .macro-reflective .art-caption{grid-column:1/-1;margin:0;font-size:10px}
+.creative-page .work .project-description{padding-top:20px}
+.creative-page .work .project-description h3{font-size:27px;margin-top:5px}
+.creative-page .work .project-description p{font-size:12px;margin-top:7px}
+.creative-page .research-carousel{margin-top:52px}
+.creative-page .research-carousel-stage{height:clamp(360px,50svh,490px)}
+.creative-page .project-reader{position:fixed;inset:0;margin:auto;width:min(1160px,calc(100vw - 64px));height:min(680px,calc(100dvh - 64px));max-width:none;max-height:none;overflow:visible;padding:0;border:1px solid #373737;border-radius:16px;background:#0d0d0d;color:#eee}
+.project-reader::backdrop{background:#000d}
+.reader-layout{display:grid;grid-template-columns:46% 54%;height:100%;border-radius:inherit;overflow:hidden}
+.reader-visual{margin:0;min-height:0;background:#111;overflow:hidden}
+.reader-visual img{width:100%;height:100%;object-fit:cover}
+.reader-visual-splint img{object-fit:contain;padding:20px}
+.reader-content{display:flex;flex-direction:column;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:36px;scrollbar-color:#777 #111}
+.reader-heading{display:flex;align-items:flex-start;gap:16px;justify-content:space-between}
+.creative-page .reader-heading h2{font-family:var(--text);font-size:27px;line-height:1.5;letter-spacing:-.02em}
+.reader-close{display:flex;align-items:center;justify-content:center;background:#202020;color:#eee;border-radius:50%;width:40px;height:40px;flex:none;transition:background .25s,transform .4s}
+.reader-close svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.4}
+.reader-close:hover{background:#383838;transform:rotate(90deg)}
+.reader-intro{font-size:13px;line-height:1.9;color:#ccc;margin-top:22px}
+.reader-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:25px 0}
+.reader-facts>div{display:flex;flex-direction:column-reverse;gap:9px;min-width:0}
+.reader-facts dt{font-size:10px;line-height:1.6;color:#aaa}
+.reader-facts dd{font-size:25px;font-weight:450;margin:0;line-height:1.3;overflow-wrap:anywhere}
+.reader-methods{color:#aaa;font-size:11px;line-height:1.9;border-top:1px solid #333;padding-top:17px}
+.reader-boundary{margin-top:17px;color:#aaa;font-size:11px;line-height:1.85}
+.reader-boundary summary{cursor:pointer;width:fit-content;padding:5px 0;color:#ccc}
+.reader-boundary p{margin-top:12px}
+.reader-link{display:flex;justify-content:space-between;align-items:center;gap:20px;border-bottom:1px solid #666;padding:18px 0 12px;margin-top:auto;font-size:13px;color:#eee}
+.reader-link .arrow{width:20px;height:20px;transition:transform .3s}
+.reader-link:hover .arrow{transform:translate(3px,-3px)}
+@media(max-height:760px) and (min-width:761px){.creative-page .macro-reflective .macro-art{height:290px}.creative-page .reader-content{padding:25px}.reader-intro{margin-top:15px;font-size:12px}.reader-facts{margin:18px 0}.reader-facts dd{font-size:23px}.reader-boundary{margin-top:12px}}
+@media(max-width:760px){.creative-page .recognition-section{padding-bottom:22px}.creative-page .recognition-detail{min-height:0;gap:15px;padding-top:20px}.creative-page .work.section-space{padding-top:38px}.creative-page .macro-reflective .macro-art{height:auto;min-height:0;grid-template-columns:1fr;grid-template-rows:auto auto auto;gap:17px;padding:25px 23px 18px}.creative-page .macro-reflective .art-heading{flex-direction:row;align-items:center;gap:15px}.creative-page .macro-reflective .art-heading>span:first-child{font-size:26px}.creative-page .macro-reflective .art-description{font-size:11px;flex:none}.creative-page .macro-reflective .macro-art img{height:160px;max-height:160px}.creative-page .macro-reflective .art-caption{font-size:8px}.creative-page .work .project-description h3{font-size:22px}.creative-page .work .project-description p{font-size:11px}.creative-page .research-carousel{margin-top:38px}.creative-page .research-carousel-stage{height:360px}.creative-page .project-reader{width:calc(100vw - 24px);height:calc(100dvh - 32px);border-radius:12px}.reader-layout{grid-template-columns:1fr;grid-template-rows:clamp(145px,25dvh,220px) minmax(0,1fr)}.reader-visual img{object-position:center 43%}.reader-visual-splint img{padding:8px}.reader-content{padding:21px}.creative-page .reader-heading h2{font-size:20px;line-height:1.4}.reader-close{width:34px;height:34px}.reader-intro{font-size:12px;line-height:1.8;margin-top:16px}.reader-facts{margin:19px 0;gap:12px}.reader-facts dd{font-size:21px}.reader-facts dt{font-size:9px}.reader-methods{font-size:10px;padding-top:13px}.reader-boundary{font-size:10px;margin-top:12px}.reader-link{font-size:12px;padding-top:18px}}
+@media(prefers-reduced-motion:no-preference){.project-reader[open] .reader-layout{animation:reader-unfold .55s cubic-bezier(.16,1,.3,1)}@keyframes reader-unfold{from{clip-path:inset(12% 0 12% 0);transform:translateY(18px)}to{clip-path:inset(0);transform:none}}}
+@media(prefers-reduced-motion:reduce){.reader-close,.reader-link .arrow{transition:none}.reader-close:hover,.reader-link:hover .arrow{transform:none}}
+
+.reader-facts dd.reader-fact-long{font-size:18px;line-height:1.8}@media(max-width:760px){.reader-facts dd.reader-fact-long{font-size:12px;line-height:2.2}}

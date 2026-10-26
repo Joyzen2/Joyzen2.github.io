@@ -14,6 +14,7 @@ import pathlib
 import re
 import shutil
 import sys
+import subprocess
 
 import markdown
 
@@ -37,6 +38,8 @@ def parse(path: pathlib.Path) -> dict:
                 meta[k.strip()] = v.strip()
     rel = path.relative_to(CONTENT).with_suffix("")
     url = "" if rel.name == "index" and rel.parent == pathlib.Path(".") else (str(rel.parent / "" if rel.name == "index" else rel) + "/")
+    if not url and meta.get("kind") == "home":
+        url = "macro/"
     return {**meta, "body": body, "url": url.replace("./", ""), "src": path}
 
 
@@ -79,6 +82,9 @@ def render(page: dict, pages: list[dict], template: str) -> str:
     body = re.sub(r"(?:<p>)?\{\{list:(\w+)\}\}(?:</p>)?", lambda m: listing(pages, m.group(1), depth), body)
     body = re.sub(r"(?:<p>)?\{\{raw:([\w-]+)\}\}(?:</p>)?", lambda m: (CHARTS / f"{m.group(1)}.html").read_text(encoding="utf-8"), body)
     body = re.sub(r"\{\{svg:([\w-]+)\}\}", lambda m: svg(m.group(1)), body)
+    if page.get("kind") == "home":
+        body = re.sub(r'href="((?![a-zA-Z][\w+.-]*:|/|#|\.\.?/)[^"]+)"',
+                      lambda m: f'href="{rel}{m.group(1)}"', body)
     body = body.replace('href="/', f'href="{rel}').replace("<table>", '<div class="table"><table>').replace("</table>", "</table></div>")
     nav = "".join(f'<a href="{rel}{u}"{" class=on" if page["url"] and page["url"].split("/")[0] == u.split("/")[0] else ""}>{n}</a>' for n, u in NAV)
     kind = page.get("kind", "")
@@ -134,6 +140,10 @@ def main() -> None:
     rendered = [(p, render(p, pages, template)) for p in pages]
     if not local:
         subset_font(display_text([h for _, h in rendered]))
+    portfolio = ROOT / "portfolio"
+    if not (portfolio / "node_modules").exists():
+        subprocess.run(["npm", "ci"], cwd=portfolio, check=True)
+    subprocess.run(["npm", "run", "build"], cwd=portfolio, check=True)
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
@@ -142,6 +152,7 @@ def main() -> None:
         dest = out / p["url"] / "index.html"
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(local_links(h) if local else h, encoding="utf-8")
+    shutil.copytree(portfolio / "dist", out, dirs_exist_ok=True)
     if not local:
         (out / ".nojekyll").write_text("", encoding="utf-8")
     print(f"生成了 {len(pages)} 页 → {out}")

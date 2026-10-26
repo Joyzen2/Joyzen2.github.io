@@ -1,0 +1,14 @@
+.dither-veil {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+
+.creative-page .contact { position: relative; isolation: isolate; overflow: hidden; }
+.creative-page .contact-veil { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.creative-page .contact-veil::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, #000 0%, #0006 25%, #0008 60%, #000 100%), linear-gradient(90deg, #000b, transparent 90%); }
+.creative-page .contact-inner { position: relative; z-index: 1; }
+@media (max-width: 680px) { .creative-page .contact-veil { opacity: .65; } }

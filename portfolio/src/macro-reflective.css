@@ -1,0 +1,10 @@
+.creative-page .macro-reflective{width:100%;height:auto;perspective:1400px}
+.creative-page .macro-reflective .reflective-card__body{height:auto;background:#111;box-shadow:none}
+.creative-page .macro-reflective .reflective-card__content{padding:0;height:auto}
+.creative-page .macro-reflective .macro-art{background:linear-gradient(rgba(0,0,0,.22),rgba(0,0,0,.34));border-radius:0}
+.creative-page .macro-reflective .macro-art img{transition:none}
+.creative-page .project-featured:hover .macro-reflective .macro-art img{transform:none}
+.creative-page .macro-reflective .art-heading>span:first-child{color:#f3f3f3}
+.creative-page .macro-reflective .art-description,.creative-page .macro-reflective .art-caption{color:#d5d5d5}
+@media(max-width:760px){.creative-page .macro-reflective .reflective-card__body{transform:none!important}}
+@media(prefers-reduced-motion:reduce){.creative-page .macro-reflective .reflective-card__body{transform:none!important}}

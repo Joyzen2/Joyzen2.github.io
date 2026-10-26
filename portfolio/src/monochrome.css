@@ -1,0 +1,26 @@
+/* Shared neutral-black theme, matching the hero. Photographic assets retain their colors. */
+html:has(.creative-page){background:#000;scrollbar-color:#666 #000}
+.creative-page{--paper:#000;--pale:#111;--ink:#f2f2f2;--ink-soft:#c4c4c4;--steel:#b8b8b8;--line:#333;background:#000;color:#f2f2f2}
+.creative-page .particle-hero,.creative-page .profile-section,.creative-page .recognition-section,.creative-page .work,.creative-page .notes,.creative-page .contact,.creative-page .opening-curtain{background:#000}
+.creative-page .profile-action-secondary{color:#eee;border-color:#777}
+.creative-page .profile-current a{color:#ccc;border-color:#444}
+.creative-page .profile-current a:hover,.creative-page .profile-card__contact:hover{background:#222;border-color:#888}
+.creative-page .life-frame .profile-card__body,.creative-page .journey-card,.creative-page .journey-back,.creative-page .gallery-card-copy,.creative-page .work-carousel-fallback button{background:#111}
+.creative-page .gallery-card-writing,.creative-page .gallery-card-copy[data-art=banner] .gallery-card-writing{background:linear-gradient(transparent,#111 20%,#111)}
+.creative-page .gallery-card-copy[data-art=conference] .gallery-card-writing,.creative-page .gallery-card-copy[data-art=competition] .gallery-card-writing{background:linear-gradient(transparent,#111 20%,#111)}
+.creative-page .gallery-image-typography{background:linear-gradient(180deg,rgba(0,0,0,.4),rgba(0,0,0,.04))}
+.creative-page .gallery-card-writing p,.creative-page .profile-intro,.creative-page .journey-back-description{color:#c9c9c9}
+.creative-page .gallery-card-writing>span,.creative-page .gallery-card-writing .gallery-card-points,.creative-page .journey-date,.creative-page .journey-type,.creative-page .journey-return,.creative-page .research-carousel-intro p,.creative-page .research-project-tabs button,.creative-page .recognition-index button,.creative-page .recognition-evidence{color:#b9b9b9}
+.creative-page .research-project-tabs button[aria-pressed=true],.creative-page .recognition-index button[aria-pressed=true]{color:#fff}
+.creative-page .profile-facts>div,.creative-page .profile-numbers,.creative-page .profile-current,.creative-page .project-detail,.creative-page .research-project-tabs,.creative-page .recognition-index{border-color:#333}
+.creative-page .journey-curve path{stroke:#888}
+.creative-page .journey-dot{background:#ddd}
+.creative-page .journey-dot:after{background:#555}
+.creative-page .profile-numbers strong,.creative-page .section-title-cn,.creative-page .closing-title>small{color:#d0d0d0}
+.creative-page .life-frame .profile-card__contact{border-color:#555}
+.creative-page .research-project-tabs{grid-template-columns:repeat(5,minmax(0,1fr));gap:20px}
+.creative-page .detail-facts dd{font-size:clamp(18px,2.2vw,30px);overflow-wrap:anywhere}
+@media(max-width:760px){.creative-page .research-project-tabs{grid-template-columns:1fr 1fr;gap:8px 24px}}
+.creative-page .macro-art{background:#111}
+.creative-page .art-heading>span:first-child{color:#eee}
+.creative-page .art-description,.creative-page .art-caption{color:#bbb}

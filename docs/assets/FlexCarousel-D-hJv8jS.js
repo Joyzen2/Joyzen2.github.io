@@ -1,0 +1,125 @@
+import{i as e,r as t,t as n}from"./jsx-runtime-BUYUh1NQ.js";import{a as r,i,n as a,o,r as s,s as c,t as l}from"./home-BOB0PSve.js";var u=class e extends c{constructor(t,{width:n=1,height:r=1,widthSegments:i=1,heightSegments:a=1,attributes:o={}}={}){let s=i,c=a,l=(s+1)*(c+1),u=s*c*6,d=new Float32Array(l*3),f=new Float32Array(l*3),p=new Float32Array(l*2),m=u>65536?new Uint32Array(u):new Uint16Array(u);e.buildPlane(d,f,p,m,n,r,0,s,c),Object.assign(o,{position:{size:3,data:d},normal:{size:3,data:f},uv:{size:2,data:p},index:{data:m}}),super(t,o)}static buildPlane(e,t,n,r,i,a,o,s,c,l=0,u=1,d=2,f=1,p=-1,m=0,h=0){let g=m,_=i/s,ee=a/c;for(let v=0;v<=c;v++){let te=v*ee-a/2;for(let a=0;a<=s;a++,m++){let ee=a*_-i/2;if(e[m*3+l]=ee*f,e[m*3+u]=te*p,e[m*3+d]=o/2,t[m*3+l]=0,t[m*3+u]=0,t[m*3+d]=o>=0?1:-1,n[m*2]=a/s,n[m*2+1]=1-v/c,v===c||a===s)continue;let y=g+a+v*(s+1),b=g+a+(v+1)*(s+1),ne=g+a+(v+1)*(s+1)+1,x=g+a+v*(s+1)+1;r[h*6]=y,r[h*6+1]=b,r[h*6+2]=x,r[h*6+3]=b,r[h*6+4]=ne,r[h*6+5]=x,h++}}}},d=e(t(),1),f=n(),p=e=>`https://images.unsplash.com/${e}?w=1200&q=80&auto=format&fit=max`,m=[{src:p(`photo-1737071371043-761e02b1ef95`),alt:`An iridescent chrome sculpture of a head`,title:`Iridescence`},{src:p(`photo-1693645325828-62cd35c8da8f`),alt:`A person in dark clothes standing in front of a white backdrop`,title:`White Room`},{src:p(`photo-1739056238917-d89cd05c48d5`),alt:`A twisted chrome form on black`,title:`Liquid Metal`},{src:p(`photo-1747191092806-c7da11881986`),alt:`A clay bust shown in profile`,title:`Clay Study`},{src:p(`photo-1605034313761-73ea4a0cfbf3`),alt:`Black and white low top sneakers`,title:`Low Tops`},{src:p(`photo-1495462911434-be47104d70fa`),alt:`A woman in a wide black hat`,title:`Brim`},{src:p(`photo-1786835568925-20cd20007ed0`),alt:`Three swirling shapes in white, gold and silver on grey`,title:`Three Forms`},{src:p(`photo-1770249196550-ff6c641165cb`),alt:`A chrome humanoid sculpture`,title:`Automaton`},{src:p(`photo-1787181875088-087d612262a7`),alt:`A black textured sculpture with an opening at its center`,title:`Obsidian`},{src:p(`photo-1770062422885-2dfcbe8fb65b`),alt:`A woman in a white shirt crouching on a dark set`,title:`Poise`},{src:p(`photo-1726910133626-9b573eca70ff`),alt:`Black curved shapes stacked like a fan`,title:`Fins`},{src:p(`photo-1604854574958-59047362c165`),alt:`A white plaster bust on a black table`,title:`Plaster`}],h={liquid:{lensWidth:.74,lensHeight:1.18,tilt:62,roundness:1,bend:.34,reach:.38,curl:`twist`,dispersion:.45,liquid:0,followCursor:!1},ribbon:{lensWidth:.8,lensHeight:.8,tilt:0,roundness:1,bend:.34,reach:.34,curl:`twist`,dispersion:.4,liquid:0,followCursor:!1},vortex:{lensWidth:.7,lensHeight:.95,tilt:30,roundness:1,bend:.46,reach:.3,curl:`twist`,dispersion:.5,liquid:0,followCursor:!1},arch:{lensWidth:.8,lensHeight:.8,tilt:0,roundness:1,bend:.3,reach:.36,curl:`rise`,dispersion:.4,liquid:0,followCursor:!1}},g={portrait:.75,square:1,landscape:4/3},_=12,ee=45e5,v={rise:2.1,bloom:1.6,spin:2.2,deal:1.5,fade:.35},te=(e,t)=>((e+t/2)%t+t)%t-t/2,y=e=>Math.min(Math.max(e,0),1),b=e=>1-(1-y(e))**3,ne=e=>1-(1-y(e))**5,x=e=>{let t=y(e);return t<.5?4*t*t*t:1-(-2*t+2)**3/2},re=`#version 300 es
+in vec3 position;
+in vec2 uv;
+uniform vec4 uRect;
+uniform vec2 uResolution;
+out vec2 vUv;
+out vec2 vLocal;
+void main() {
+  vUv = uv;
+  vLocal = vec2(position.x, -position.y) * uRect.zw;
+  vec2 px = uRect.xy + vLocal;
+  gl_Position = vec4(px.x / uResolution.x * 2.0 - 1.0, 1.0 - px.y / uResolution.y * 2.0, 0.0, 1.0);
+}
+`,ie=`#version 300 es
+precision highp float;
+uniform sampler2D tMap;
+uniform vec2 uSize;
+uniform vec2 uImage;
+uniform float uRadius;
+uniform float uAlpha;
+uniform float uReady;
+uniform float uShift;
+uniform float uDpr;
+uniform vec3 uPlaceholder;
+in vec2 vUv;
+in vec2 vLocal;
+out vec4 fragColor;
+
+float roundedBox(vec2 p, vec2 b, float r) {
+  vec2 q = abs(p) - b + r;
+  return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+}
+
+void main() {
+  float sd = roundedBox(vLocal, uSize * 0.5, min(uRadius, min(uSize.x, uSize.y) * 0.5));
+  float mask = clamp(0.5 - sd * uDpr, 0.0, 1.0);
+  vec2 local = vLocal / uSize + 0.5;
+  float cardAspect = uSize.x / uSize.y;
+  float imageAspect = uImage.x / max(uImage.y, 1.0);
+  vec2 scale = imageAspect > cardAspect ? vec2(cardAspect / imageAspect, 1.0) : vec2(1.0, imageAspect / cardAspect);
+  scale /= 1.08;
+  vec2 uv = vec2(local.x, 1.0 - local.y);
+  uv = (uv - 0.5) * scale + 0.5;
+  uv.x += uShift * (1.0 - scale.x) * 0.5;
+  vec3 image = texture(tMap, uv).rgb;
+  vec3 color = mix(uPlaceholder, image, uReady);
+  float alpha = mask * uAlpha;
+  fragColor = vec4(color * alpha, alpha);
+}
+`,ae=`#version 300 es
+in vec2 position;
+void main() {
+  gl_Position = vec4(position, 0.0, 1.0);
+}
+`,oe=`#version 300 es
+precision highp float;
+uniform sampler2D tScene;
+uniform vec2 uResolution;
+uniform float uDpr;
+uniform vec2 uCenter;
+uniform vec2 uHalf;
+uniform float uAngle;
+uniform float uExponent;
+uniform float uInner;
+uniform float uOuter;
+uniform float uFlow;
+uniform float uCurl;
+uniform float uDispersion;
+uniform float uStrength;
+uniform float uSceneAlpha;
+out vec4 fragColor;
+
+void main() {
+  vec2 frag = gl_FragCoord.xy / uDpr;
+  vec2 uv = frag / uResolution;
+  vec2 rel = frag - vec2(uCenter.x, uResolution.y - uCenter.y);
+  float ca = cos(uAngle);
+  float sa = sin(uAngle);
+  vec2 local = vec2(ca * rel.x + sa * rel.y, -sa * rel.x + ca * rel.y);
+  vec2 k = max(abs(local) / uHalf, vec2(1e-5));
+  float nd = pow(pow(k.x, uExponent) + pow(k.y, uExponent), 1.0 / uExponent);
+  vec2 grad = pow(k, vec2(uExponent - 1.0)) * sign(local) / uHalf * pow(nd, 1.0 - uExponent);
+  float glen = max(length(grad), 1e-6);
+  float edge = (nd - 1.0) / glen;
+  vec2 outward = grad / glen;
+  vec2 normal = vec2(ca * outward.x - sa * outward.y, sa * outward.x + ca * outward.y);
+  vec2 along = vec2(-normal.y, normal.x);
+
+  float t = clamp((edge + uInner) / (uInner + uOuter), 0.0, 1.0);
+  float ramp = t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
+  float slope = 16.0 * t * t * (1.0 - t) * (1.0 - t);
+  float reachX = rel.x / (uResolution.x * 0.5);
+  float side = smoothstep(0.02, 0.3, abs(reachX)) * (uCurl == 0.0 ? sign(reachX) : uCurl);
+  float lift = ramp * side * uFlow * uStrength;
+  vec2 swirl = along * along.y * side * slope * uFlow * uStrength * 0.35;
+  vec2 drift = vec2(0.0, -lift) - swirl;
+  vec2 shifted = uv + drift / uResolution;
+
+  vec2 texels = uResolution * uDpr;
+  vec2 gx = dFdx(shifted);
+  vec2 gy = dFdy(shifted);
+  gx *= min(1.0, 3.0 / max(length(gx * texels), 1e-4));
+  gy *= min(1.0, 3.0 / max(length(gy * texels), 1e-4));
+
+  vec4 color = textureGrad(tScene, shifted, gx, gy);
+  vec2 spread = vec2(0.0, side * slope * uFlow * uStrength) / uResolution * uDispersion;
+  float spreadPx = length(spread * texels);
+  if (color.a > 0.002 && spreadPx > 0.25) {
+    vec3 base = color.rgb / color.a;
+    vec3 sumColor = vec3(0.0);
+    vec3 sumWeight = vec3(0.0);
+    for (int i = 0; i < ${_}; i++) {
+      float s = (float(i) + 0.5) / float(${_});
+      vec4 c = textureGrad(tScene, shifted + spread * (s - 0.5), gx, gy);
+      vec3 w = max(1.0 - abs(vec3(s) - vec3(0.15, 0.5, 0.85)) * 2.6, 0.0) * c.a;
+      sumColor += c.rgb * (w / max(c.a, 0.002));
+      sumWeight += w;
+    }
+    vec3 split = mix(base, sumColor / max(sumWeight, vec3(1e-4)), clamp(sumWeight * 2.0, 0.0, 1.0));
+    color.rgb = mix(color.rgb, clamp(split, 0.0, 1.0) * color.a, smoothstep(0.25, 1.5, spreadPx));
+  }
+
+  fragColor = color * uSceneAlpha;
+}
+`,S=({value:e})=>(0,f.jsx)(`span`,{className:`flex-carousel__digits`,children:String(e).padStart(2,`0`).split(``).map((e,t)=>(0,f.jsx)(`span`,{className:`flex-carousel__digit`,children:(0,f.jsx)(`span`,{className:`flex-carousel__reel`,style:{transform:`translateY(${-Number(e)*10}%)`},children:`0123456789`.split(``).map(e=>(0,f.jsx)(`span`,{children:e},e))})},t))}),C=({items:e=m,navigation:t,preset:n=`liquid`,intro:c=`rise`,cardHeight:p=.5,gap:_=12,radius:C=0,fit:w=`natural`,lensWidth:T,lensHeight:E,tilt:D,roundness:O,bend:k,reach:A,curl:se,dispersion:j,liquid:ce,followCursor:M,squeeze:N=.2,focusOnClick:P=!0,autoplay:F=!1,interval:I=4,captions:le=!0,captureWheel:ue=!1,onChange:L,onSelect:R,className:z=``,style:de})=>{let fe=(0,d.useRef)(null),B=(0,d.useRef)(null),V=(0,d.useRef)(e),H=(0,d.useRef)(null),pe=(0,d.useRef)({onChange:L,onSelect:R}),[me,he]=(0,d.useState)(!0),[U,ge]=(0,d.useState)(0),[_e,ve]=(0,d.useState)(!1),[ye,be]=(0,d.useState)(!1),W=h[n]||h.liquid,G=(e,t)=>e??W[t],K=e&&e.length?e:m,q=K.map(e=>e.src).join(`|`);(0,d.useEffect)(()=>{V.current=K,pe.current={onChange:L,onSelect:R},B.current={intro:c,cardHeight:p,gap:_,radius:C,fit:w,lensWidth:G(T,`lensWidth`),lensHeight:G(E,`lensHeight`),tilt:G(D,`tilt`),roundness:G(O,`roundness`),bend:G(k,`bend`),reach:G(A,`reach`),curl:G(se,`curl`),dispersion:G(j,`dispersion`),liquid:G(ce,`liquid`),followCursor:G(M,`followCursor`),squeeze:N,focusOnClick:P,autoplay:F,interval:I,captureWheel:ue},H.current?.wake()}),(0,d.useEffect)(()=>{H.current?.setItems(V.current)},[q]),(0,d.useEffect)(()=>{let e=fe.current;if(!e)return;let t;try{t=new r({dpr:Math.min(window.devicePixelRatio||1,2),alpha:!0,premultipliedAlpha:!0,antialias:!1,depth:!1})}catch{he(!1);return}let n=t.gl;if(!t.isWebgl2){he(!1),n.getExtension(`WEBGL_lose_context`)?.loseContext();return}n.clearColor(0,0,0,0);let c=n.canvas;c.style.display=`block`,c.style.width=`100%`,c.style.height=`100%`,c.setAttribute(`aria-hidden`,`true`),e.prepend(c);let d=new o(n,{vertex:re,fragment:ie,transparent:!0,depthTest:!1,depthWrite:!1,uniforms:{tMap:{value:new s(n)},uRect:{value:[0,0,1,1]},uResolution:{value:[1,1]},uSize:{value:[1,1]},uImage:{value:[1,1]},uRadius:{value:16},uAlpha:{value:1},uReady:{value:0},uShift:{value:0},uDpr:{value:1},uPlaceholder:{value:[.5,.5,.5]}}});d.setBlendFunc(n.ONE,n.ONE_MINUS_SRC_ALPHA);let f=new i(n,{geometry:new u(n),program:d}),p=new a(n,{width:2,height:2,depth:!1,minFilter:n.LINEAR_MIPMAP_LINEAR,magFilter:n.LINEAR}),m={tScene:{value:p.texture},uResolution:{value:[1,1]},uDpr:{value:1},uCenter:{value:[0,0]},uHalf:{value:[1,1]},uAngle:{value:0},uExponent:{value:2},uInner:{value:60},uOuter:{value:80},uFlow:{value:0},uCurl:{value:0},uDispersion:{value:0},uStrength:{value:0},uSceneAlpha:{value:0}},h=new i(n,{geometry:new l(n),program:new o(n,{vertex:ae,fragment:oe,uniforms:m,depthTest:!1,depthWrite:!1})}),_=window.matchMedia(`(prefers-reduced-motion: reduce)`),S=_.matches,C=t.getExtension(`EXT_texture_filter_anisotropic`)?8:0,w=[],T=1,E=1,D=0,O=0,k=0,A=`spring`,se=0,j=0,ce=performance.now(),M=!0,N=!0,P=!0,F=-1,I=-1/0,le=performance.now(),ue=!1,L=0,R=0,z=null,de=!1,me=``,U=1,_e=0,ye=0,W={x:0,y:0,vx:0,vy:0,ready:!1},G={x:0,y:0,over:!1,down:!1,id:-1,startX:0,startY:0,startPos:0,dragging:!1,touch:!1,samples:[]},K={kind:`none`,t:0,running:!1,done:!1,readyAt:0},q={index:-1,pending:-1,t:0,v:0,target:0},J=[],xe=(e,t)=>{let r=new s(n,{generateMipmaps:!0,minFilter:n.LINEAR_MIPMAP_LINEAR,magFilter:n.LINEAR,anisotropy:C}),i={item:e,index:t,texture:r,aspect:.8,loaded:!1,failed:!1,ready:0,color:[.5,.5,.5],image:[1,1],dispose:()=>{}},a=new Image;return a.crossOrigin=`anonymous`,a.decoding=`async`,a.onload=()=>{if(!N||!w.includes(i))return;let t=a;if(e.coverTitle){let n=document.createElement(`canvas`);n.width=1200,n.height=900;let r=n.getContext(`2d`),i=(e.imageFit===`contain`?Math.min:Math.max)(1200/a.naturalWidth,900/a.naturalHeight),o=a.naturalWidth*i,s=a.naturalHeight*i;r.fillStyle=`#101010`,r.fillRect(0,0,1200,900),r.drawImage(a,(1200-o)*(e.imagePositionX??.5),(900-s)/2,o,s),r.fillStyle=`rgba(0, 0, 0, .28)`,r.fillRect(0,0,1200,900);let c=r.createLinearGradient(0,240,0,900);c.addColorStop(0,`rgba(0,0,0,0)`),c.addColorStop(1,`rgba(0,0,0,.98)`),r.fillStyle=c,r.fillRect(0,0,1200,900),r.fillStyle=`#edf3fa`,r.font=`500 90px Manrope, sans-serif`,r.fillText(e.coverTitle,64,675),r.font=`400 36px "PingFang SC", sans-serif`,r.fillStyle=`#d2dfed`,r.fillText(e.title,68,751),r.font=`400 25px "PingFang SC", sans-serif`,r.fillStyle=`#afc3d9`,r.fillText(e.subtitle||``,68,819),t=n}r.image=t,r.update(),i.image=[t.width||a.naturalWidth||1,t.height||a.naturalHeight||1],i.aspect=i.image[0]/i.image[1];try{let e=document.createElement(`canvas`);e.width=8,e.height=8;let t=e.getContext(`2d`,{willReadFrequently:!0});if(t){t.drawImage(a,0,0,8,8);let e=t.getImageData(0,0,8,8).data,n=[0,0,0];for(let t=0;t<e.length;t+=4)n[0]+=e[t],n[1]+=e[t+1],n[2]+=e[t+2];i.color=n.map(e=>e/64/255)}}catch{i.color=[.5,.5,.5]}i.loaded=!0,P=!0,Q()},a.onerror=()=>{N&&(i.failed=!0,P=!0,Q())},a.src=e.src,i.dispose=()=>{a.onload=null,a.onerror=null,n.deleteTexture(r.texture)},i},Se=e=>{w.forEach(e=>e.dispose()),w=e.map(xe),F=-1,z=null,de=!0,q.target=0,q.t=0,q.v=0,q.pending=-1,be(!1),K.readyAt=performance.now(),P=!0,Q()},Ce=e=>{let t=Math.max(24,e.cardHeight*E),n=g[e.fit],r=w.map(e=>(n||e.aspect)*t),i=[],a=0;for(let t=0;t<r.length;t++)i.push(a+r[t]/2),a+=r[t]+e.gap;return{cardH:t,widths:r,centers:i,gap:e.gap,loop:Math.max(a,1)}},we=(e,t)=>{let n=0,r=1/0;for(let i=0;i<e.centers.length;i++){let a=Math.abs(te(e.centers[i]-t,e.loop));a<r&&(r=a,n=i)}return n},Y=(e,t)=>{let n=we(e,t);return t+te(e.centers[n]-t,e.loop)},Te=(e,t,n)=>{let r=we(e,n),i=te(n-e.centers[r],e.loop);return Math.round((n-i-e.centers[r])/e.loop)*t.loop+t.centers[r]+i*(t.widths[r]/e.widths[r])},Ee=(e,t)=>{let n=Y(e,k),r=we(e,n),i=e.centers.length;for(let a=0;a<Math.abs(t);a++){let a=(r+(t>0?1:i-1))%i,o=t>0?e.widths[r]/2+e.gap+e.widths[a]/2:-(e.widths[a]/2+e.gap+e.widths[r]/2);n+=o,r=a}k=n,A=`spring`,P=!0,Q()},De=(e,t)=>{let n=(t%e.centers.length+e.centers.length)%e.centers.length;k+=te(e.centers[n]-k,e.loop),A=`spring`,P=!0,Q()},Oe=e=>{q.index=e,q.pending=-1,q.target=1,be(!0),P=!0,Q()},X=()=>(q.pending=-1,q.target!==0&&(q.target=0,be(!1),P=!0,Q(),!0)),Z=()=>{K.running&&(K.t=1)},ke=()=>{let e=K.running?K.t:+!!K.done,t={sceneAlpha:1,strength:1,card:null};if(!K.done&&!K.running)return t.sceneAlpha=0,t.strength=0,t;if(e>=1)return t;let n=K.kind;return n===`rise`?(t.strength=x((e-.3)/.65),t.card=t=>{let n=Math.min(Math.abs(t)/(T*.6),1)*.34,r=y((e-n)/.6);return{alpha:y(r*4),x:0,y:(1-ne(r))*E*.62,scale:.5+.5*x((r-.18)/.82)}}):n===`bloom`?(t.strength=x((e-.2)/.8),t.card=t=>{let n=Math.min(Math.abs(t)/(T*.6),1)*.25,r=b((e-n)/.55);return{alpha:r,x:0,y:0,scale:.92+.08*r}}):n===`spin`?(t.sceneAlpha=b(e/.25),t.strength=b((e-.55)/.45)):n===`deal`?(t.strength=b((e-.45)/.5),t.card=t=>{let n=Math.min(Math.abs(t)/(T*.6),1)*.3,r=b((e-.12-n)/.5);return{alpha:b((e-n)/.12),x:-t*(1-r),y:0,scale:1}}):(t.sceneAlpha=b(e),t.strength=b(e)),t},Ae=(e,t)=>{let n=S&&e.intro!==`none`?`fade`:e.intro;if(K.kind=v[n]?n:`none`,K.running=K.kind!==`none`,K.done=!K.running,K.t=0,K.done&&ve(!0),K.kind===`spin`){let e=t.loop*1.6+T;D=k+e,O=-e*3,A=`spring`}},je=()=>{T=Math.max(1,e.clientWidth),E=Math.max(1,e.clientHeight),t.dpr=Math.min(window.devicePixelRatio||1,2,Math.sqrt(ee/(T*E))),t.setSize(T,E),p.setSize(Math.max(2,Math.round(T*t.dpr)),Math.max(2,Math.round(E*t.dpr))),m.tScene.value=p.texture,P=!0,Q()},Me=r=>{if(j=0,!N)return;let i=B.current,a=Math.min(.05,Math.max(.001,(r-ce)/1e3));if(ce=r,!i||!w.length){M&&(j=requestAnimationFrame(Me));return}let o=Ce(i),s=w.length,c=!1;if(de?(k=Y(o,k),D=k,O=0,de=!1):z&&z.loop!==o.loop&&(D=Te(z,o,D),k=Te(z,o,k),G.startPos=D+(G.x-G.startX),c=!0),z=o,!K.running&&!K.done&&(w.every(e=>e.loaded||e.failed)||r-K.readyAt>3500)&&(k=Y(o,k),D=k,Ae(i,o)),K.running&&(K.t=Math.min(1,K.t+a/(v[K.kind]||1)),K.t>=1&&(K.running=!1,K.done=!0,ve(!0)),c=!0),A===`wheel`&&r-se>150&&(k=Y(o,k),A=`spring`),G.dragging)c=!0;else{let e=K.running&&K.kind===`spin`?9:A===`wheel`?80:55,t=2*Math.sqrt(e),n=Math.ceil(a/(1/240)),r=a/n;for(let i=0;i<n;i++){let n=e*(k-D)-t*O;O+=n*r,D+=O*r}Math.abs(k-D)<.05&&Math.abs(O)<.5?(D=k,O=0):c=!0}if(Math.abs(D)>o.loop*8){let e=Math.round(D/o.loop)*o.loop;D-=e,k-=e,G.startPos-=e}let l=we(o,D);e.dataset.active=String(l),e.dataset.focus=q.t.toFixed(3),l!==F&&(F=l,ge(l),pe.current.onChange?.(l,V.current[l])),q.pending>=0&&A===`spring`&&Math.abs(k-D)<1.5&&Math.abs(O)<30&&(l===q.pending?Oe(l):q.pending=-1),i.autoplay&&!S&&K.done&&q.target===0&&q.t<.01&&!G.over&&!G.down&&!ue&&A===`spring`&&Math.abs(k-D)<1&&r-I>3e3&&r-le>i.interval*1e3&&(le=r,Ee(o,1)),i.autoplay&&!S&&(c=!0);let u=Math.abs(D-ye)/a;ye=D;let g=S?0:Math.min(u/2600,1);_e+=(g-_e)*(1-Math.exp(-a/(g>_e?.07:.35))),_e>.001&&(c=!0);let _=S?0:i.liquid,ee=Math.max(-1,Math.min(1,O/2200)),b=2*Math.sqrt(120)*.32;R+=(120*(ee-L)-b*R)*a,L+=R*a,(Math.abs(L)>5e-4||Math.abs(R)>.005)&&(c=!0),q.v+=(64*(q.target-q.t)-16*q.v)*a,q.t+=q.v*a,Math.abs(q.target-q.t)<5e-4&&Math.abs(q.v)<.001?(q.t=q.target,q.v=0):c=!0;let ne=y(q.t),re=x(ne),ie=q.index>=0&&q.index<s?o.widths[q.index]:o.cardH,ae=Math.max(1,Math.min(1.3,E*.84/o.cardH,T*.92/ie)),oe=1+(ae-1)*re;Math.abs(oe-U)>5e-4&&(U=oe,e.style.setProperty(`--flex-carousel-lift`,U.toFixed(4)));let C=ke(),fe=T/2,H=E/2,he=i.followCursor&&G.over&&!G.dragging&&!G.touch&&q.target===0,be=he?G.x:fe,xe=he?G.y:H;W.ready||=(W.x=fe,W.y=H,!0);let Se=2*Math.sqrt(110)*.8;W.vx+=(110*(be-W.x)-Se*W.vx)*a,W.vy+=(110*(xe-W.y)-Se*W.vy)*a,W.x+=W.vx*a,W.y+=W.vy*a,(Math.abs(be-W.x)+Math.abs(xe-W.y)>.2||Math.abs(W.vx)+Math.abs(W.vy)>.5)&&(c=!0);let De=o.cardH,X=i.lensWidth*T/2,Z=i.lensHeight*T/2,je=Math.abs(L)*_;X*=1+je*.16,Z*=1-je*.08;let Q=W.x-L*14*_;for(let e=0;e<s;e++){let t=w[e];t.loaded&&t.ready<1&&(t.ready=Math.min(1,t.ready+a/.45),c=!0)}let Ne=!K.done;if(P||c||G.dragging){P=!1,J=[];let e=t.dpr;d.uniforms.uResolution.value=[T,E],d.uniforms.uDpr.value=e,d.uniforms.uRadius.value=i.radius;let r=1-y(i.squeeze)*_e,a=[];for(let e=0;e<s;e++){let t=o.widths[e],n=te(o.centers[e]-D,o.loop);for(let i=-3;i<=3;i++){let s=n+i*o.loop;if(Math.abs(s)-t/2>T+40)continue;let c=C.card?C.card(s):null,l=fe+s+(c?c.x:0),u=r*(c?c.scale:1),d=c?c.alpha:1;if(ne>0){if(e===q.index&&Math.abs(s)<t)u*=1+(ae-1)*re;else{let e=Math.min(Math.abs(s)/T,1)*.25,t=x(ne*1.25-e);l+=Math.sign(s)*t*T*.7,d*=1-t}}let f=t*u;d<=.001||l+f/2<-40||l-f/2>T+40||a.push({i:e,rel:s,x:l,y:H+(c?c.y:0),cw:f,ch:De*u,alpha:d})}}a.sort((e,t)=>Math.abs(t.rel)-Math.abs(e.rel));let c=!0;for(let e of a){let n=w[e.i];d.uniforms.tMap.value=n.texture,d.uniforms.uRect.value=[e.x,e.y,e.cw+2,e.ch+2],d.uniforms.uSize.value=[e.cw,e.ch],d.uniforms.uImage.value=n.image,d.uniforms.uAlpha.value=e.alpha,d.uniforms.uReady.value=n.ready,d.uniforms.uShift.value=S?0:Math.max(-1,Math.min(1,e.rel/(T*.75))),d.uniforms.uPlaceholder.value=n.color,t.render({scene:f,target:p,clear:c}),c=!1,J.push({index:e.i,x0:e.x-e.cw/2,x1:e.x+e.cw/2,y0:e.y-e.ch/2,y1:e.y+e.ch/2})}c&&(t.bindFramebuffer(p),n.viewport(0,0,p.width,p.height),n.clear(n.COLOR_BUFFER_BIT)),t.bindFramebuffer(),p.texture.bind(),n.generateMipmap(n.TEXTURE_2D),m.uResolution.value=[T,E],m.uDpr.value=e,m.uCenter.value=[Q,W.y],m.uHalf.value=[Math.max(X,1),Math.max(Z,1)],m.uAngle.value=i.tilt*Math.PI/180,m.uExponent.value=2+(1-y(i.roundness))**1.5*10;let l=Math.max(X,1),u=Math.max(Z,1),g=Math.max(4,i.reach*(l+u)*.5);m.uInner.value=g,m.uOuter.value=g*1.6,m.uFlow.value=i.bend*(l+u)*.45,m.uCurl.value=i.curl===`rise`?1:i.curl===`fall`?-1:0,m.uDispersion.value=i.dispersion*.12*(1+Math.abs(L)*_*1.2),m.uStrength.value=C.strength*(1-re),m.uSceneAlpha.value=C.sceneAlpha,t.render({scene:h})}let $=``;if(G.over&&!G.dragging&&K.done&&i.focusOnClick){let e=J.find(e=>G.x>=e.x0&&G.x<=e.x1&&G.y>=e.y0&&G.y<=e.y1);q.target>0?$=`close`:e&&($=`open`)}$!==me&&(me=$,me?e.setAttribute(`data-hover`,me):e.removeAttribute(`data-hover`)),M&&(c||Ne||P||G.down)&&(j=requestAnimationFrame(Me))},Q=()=>{!j&&M&&N&&(ce=performance.now(),j=requestAnimationFrame(Me))},Ne=t=>{let n=e.getBoundingClientRect();return[t.clientX-n.left,t.clientY-n.top]},$=e=>{if(e.button!==void 0&&e.button>0)return;Z();let[t,n]=Ne(e);G.down=!0,G.id=e.pointerId,G.touch=e.pointerType===`touch`,G.startX=t,G.startY=n,G.x=t,G.y=n,G.startPos=D,G.dragging=!1,G.samples=[{x:t,t:performance.now()}],I=performance.now(),Math.abs(O)>40&&(k=D,O=0),P=!0,Q()},Pe=t=>{let[n,r]=Ne(t);if(G.x=n,G.y=r,G.over=!0,G.down&&t.pointerId===G.id){let i=n-G.startX,a=r-G.startY,o=G.touch?10:5;if(!G.dragging){if(G.touch&&Math.abs(a)>o&&Math.abs(a)>Math.abs(i)){G.down=!1;return}if(Math.abs(i)>o){G.dragging=!0,G.startX=n,G.startPos=D,X();try{e.setPointerCapture(t.pointerId)}catch{G.dragging=!0}e.setAttribute(`data-dragging`,``)}}if(G.dragging){D=G.startPos-(n-G.startX),k=D,O=0;let e=performance.now();for(G.samples.push({x:n,t:e});G.samples.length>2&&e-G.samples[0].t>100;)G.samples.shift()}}P=!0,Q()},Fe=t=>{if(!G.down||t.pointerId!==G.id)return;G.down=!1,e.removeAttribute(`data-dragging`);let n=B.current;if(!n)return;let r=Ce(n);if(I=performance.now(),G.dragging){G.dragging=!1;let e=performance.now(),t=G.samples[0],n=G.samples[G.samples.length-1],i=0;t&&n&&n.t>t.t&&e-n.t<70&&(i=-((n.x-t.x)/(n.t-t.t))*1e3),O=i;let a=Y(r,D+i*.32);k=a,Math.abs(i)>400&&Math.abs(a-D)<1&&Ee(r,i>0?1:-1),A=`spring`,Q();return}if(X())return;let[i,a]=Ne(t),o=J.find(e=>i>=e.x0&&i<=e.x1&&a>=e.y0&&a<=e.y1);if(o){if(o.index===F&&Math.abs(k-D)<2)pe.current.onSelect?.(o.index,V.current[o.index]),n.focusOnClick&&Oe(o.index);else{let e=(o.x0+o.x1)/2-T/2;k=Y(r,D+e),A=`spring`,n.focusOnClick&&(q.pending=o.index),Q()}}},Ie=()=>{G.over=!1,P=!0,Q()},Le=()=>{G.down=!1,G.dragging=!1,e.removeAttribute(`data-dragging`);let t=B.current;t&&(k=Y(Ce(t),D),A=`spring`,Q())},Re=e=>{let t=B.current;if(!t||e.ctrlKey||!t.captureWheel)return;let n=e.deltaX,r=e.deltaY;e.shiftKey&&Math.abs(n)<Math.abs(r)&&(n=r,r=0);let i=e.deltaMode===1?16:e.deltaMode===2?E:1,a=Math.abs(n)>Math.abs(r);if(!a&&!t.captureWheel||(e.preventDefault(),Z(),I=performance.now(),X()))return;let o=Math.max(-120,Math.min(120,(a?n:r)*i));k+=o*1.25,A=`wheel`,se=performance.now(),Q()},ze=e=>{let t=B.current;if(!t)return;let n=Ce(t);if(e.key===`ArrowRight`||e.key===`ArrowDown`)e.preventDefault(),Z(),X(),I=performance.now(),Ee(n,1);else if(e.key===`ArrowLeft`||e.key===`ArrowUp`)e.preventDefault(),Z(),X(),I=performance.now(),Ee(n,-1);else if(e.key===`Home`)e.preventDefault(),X(),De(n,0);else if(e.key===`End`)e.preventDefault(),X(),De(n,w.length-1);else if(e.key===`Escape`)X()&&e.preventDefault();else if(e.key===`Enter`||e.key===` `){if(e.preventDefault(),X()||F<0)return;pe.current.onSelect?.(F,V.current[F]),t.focusOnClick&&Oe(F)}},Be=()=>{ue=!0},Ve=()=>{ue=!1},He=e=>{S=e.matches,P=!0,Z(),Q()};_.addEventListener(`change`,He);let Ue=()=>{document.hidden||Q()};e.addEventListener(`pointerdown`,$),e.addEventListener(`pointermove`,Pe),e.addEventListener(`pointerup`,Fe),e.addEventListener(`pointerleave`,Ie),e.addEventListener(`pointercancel`,Le),e.addEventListener(`wheel`,Re,{passive:!1}),e.addEventListener(`keydown`,ze),e.addEventListener(`focus`,Be),e.addEventListener(`blur`,Ve),document.addEventListener(`visibilitychange`,Ue);let We=new ResizeObserver(je);We.observe(e);let Ge=new IntersectionObserver(([e])=>{M=e.isIntersecting,Q()});return Ge.observe(e),H.current={wake:()=>{P=!0,Q()},setItems:Se,navigate:e=>{Z(),X(),De(Ce(B.current),e)}},je(),Se(V.current),()=>{N=!1,M=!1,H.current=null,cancelAnimationFrame(j),We.disconnect(),Ge.disconnect(),e.removeEventListener(`pointerdown`,$),e.removeEventListener(`pointermove`,Pe),e.removeEventListener(`pointerup`,Fe),e.removeEventListener(`pointerleave`,Ie),e.removeEventListener(`pointercancel`,Le),e.removeEventListener(`wheel`,Re),e.removeEventListener(`keydown`,ze),e.removeEventListener(`focus`,Be),e.removeEventListener(`blur`,Ve),document.removeEventListener(`visibilitychange`,Ue),_.removeEventListener(`change`,He),w.forEach(e=>e.dispose()),w=[],n.getExtension(`WEBGL_lose_context`)?.loseContext(),c.parentNode&&c.parentNode.removeChild(c)}},[]),(0,d.useEffect)(()=>{t&&H.current?.navigate(t.index)},[t]);let J=K[U]||K[0],xe=J?J.title||J.alt||`Image ${U+1}`:``;return me?(0,f.jsxs)(`div`,{ref:fe,className:`flex-carousel ${z}`.trim(),style:{...de,"--flex-carousel-half":`${Math.min(Math.max(p,.05),1)*50}%`},role:`region`,"aria-roledescription":`carousel`,"aria-label":`${K.length} 项量化 AI 研究与开发，左右方向键切换，回车查看`,tabIndex:0,children:[le&&J&&_e&&(0,f.jsxs)(`div`,{className:`flex-carousel__caption`,"aria-hidden":`true`,children:[(0,f.jsxs)(`span`,{className:`flex-carousel__title`,children:[J.title||J.alt,J.subtitle&&(0,f.jsx)(`span`,{className:`flex-carousel__subtitle`,children:J.subtitle})]},U),(0,f.jsxs)(`span`,{className:`flex-carousel__count`,"data-hidden":ye?``:void 0,children:[(0,f.jsx)(S,{value:U+1}),(0,f.jsx)(`span`,{className:`flex-carousel__slash`,children:`/`}),(0,f.jsx)(`span`,{children:String(K.length).padStart(2,`0`)})]})]}),(0,f.jsx)(`div`,{className:`flex-carousel__live`,"aria-live":`polite`,"aria-atomic":`true`,children:`${xe}, ${U+1} of ${K.length}`})]}):(0,f.jsx)(`div`,{className:`work-carousel-fallback`,children:K.map((e,t)=>(0,f.jsxs)(`button`,{onClick:()=>R?.(t,e),children:[(0,f.jsx)(`img`,{src:e.src,alt:e.alt}),(0,f.jsx)(`span`,{children:e.title})]},e.src))})};export{C as default};

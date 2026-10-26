@@ -47,7 +47,7 @@ function About() {
         <div className="profile-numbers"><div><strong>30<span>项</span></strong><p>实时面板核心宏观指标</p></div><div><strong>53<span>项</span></strong><p>基本面与量价因子</p></div><div><strong>12<span>项</span></strong><p>上线闸门检查</p></div></div>
         <p className="profile-education">利物浦大学金融计算硕士项目（西交利物浦大学就读）；本科为西交利物浦大学计算机科学与技术。</p>
         <div className="profile-actions"><External href={GITHUB} className="profile-action profile-action-secondary"><HoverLabel alternate="查看研究代码">GitHub</HoverLabel><Arrow /></External></div>
-        <div className="profile-current"><span>持续研究</span><div><a href={MACRO} target="_blank" rel="noreferrer">宏观信息与市场定价</a><a href="#work">中证500指数增强</a><a href={AI_SITE} target="_blank" rel="noreferrer">AI 投研工程开发</a></div></div>
+        <div className="profile-current"><span>持续研究</span><div><a href={MACRO} target="_blank" rel="noreferrer">宏观信息与市场定价</a><a href="/csi500/">中证500指数增强</a><a href={AI_SITE} target="_blank" rel="noreferrer">AI 投研工程开发</a></div></div>
       </div>
     </div>
     <Suspense fallback={<div className="journey-loading" role="status">经历加载中…</div>}><ExperienceJourney /></Suspense>
@@ -65,7 +65,8 @@ const detailContent = {
     facts: [['53', '基本面与量价因子'], ['8.05%', '回测年化超额'], ['1.69', '回测信息比']],
     methods: 'PIT 数据 · LightGBM 滚动训练 · 风格与行业风险模型 · cvxpy 组合优化',
     boundary: '历史回测：2013-02—2026-08，695 周，以官方全收益指数为基准，计入佣金、滑点与印花税。保守财报口径年化超额 6.06%；2025 年及 2026 年前 8 个月超额为负。历史结果不代表未来表现。',
-    link: null,
+    link: '/csi500/',
+    linkLabel: '进入中证500研究网站',
   },
   benchmark: {
     title: 'InvestorBench · 金融 Agent 复现与评测',
@@ -73,7 +74,8 @@ const detailContent = {
     facts: [['62', '实验运行记录'], ['2 × 2', '析因消融设计'], ['2026', '硕士研究项目']],
     methods: '分层记忆 · 结构化决策 · 零模型 · 置换检验 · 实验账本',
     boundary: '硕士毕业项目进行中。复现与消融用于检验实验可靠性，结果受模型、资产、区间和实现细节影响。',
-    link: null,
+    link: '/investorbench/',
+    linkLabel: '进入 InvestorBench 研究网站',
   },
   text: {
     title: '大模型文本因子与前视偏差',
@@ -81,7 +83,8 @@ const detailContent = {
     facts: [['3', '开源大模型'], ['约 113 万', '批量打分'], ['年度滚动', '学习基准验证']],
     methods: '文本时点对齐 · 遮名打分 · 事件研究 · 安慰剂特征 · 知识边界对照',
     boundary: '多数提升与噪音难以区分，不能据此宣称形成了稳定有效的文本 Alpha。展示重点是实验设计与偏差检验。',
-    link: null,
+    link: '/text-factors/',
+    linkLabel: '进入文本因子研究网站',
   },
   development: {
     title: 'AI 投研工程开发',

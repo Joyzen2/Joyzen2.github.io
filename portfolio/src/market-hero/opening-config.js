@@ -12,3 +12,12 @@ export const OPENING = Object.freeze({
 });
 export function readPreference(key) { try { return localStorage.getItem(key); } catch { return null; } }
 export function writePreference(key, value) { try { localStorage.setItem(key, value); } catch { /* Private browsing still gets a usable homepage. */ } }
+
+// Heavy sections below the fold wait for this, so the opening video gets the connection first.
+let settled = false;
+const settleListeners = new Set();
+export function markOpeningSettled() { settled = true; settleListeners.forEach(listener => listener()); settleListeners.clear(); }
+export function whenOpeningSettled(listener) {
+  if (settled) listener(); else settleListeners.add(listener);
+  return () => settleListeners.delete(listener);
+}

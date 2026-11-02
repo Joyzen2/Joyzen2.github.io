@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { OPENING, readPreference, writePreference } from './opening-config.js';
+import { OPENING, markOpeningSettled, readPreference, writePreference } from './opening-config.js';
 
 export default function useOpeningPlayback({ section, onTime }) {
   const video = useRef(null);
@@ -23,6 +23,8 @@ export default function useOpeningPlayback({ section, onTime }) {
   const volumeFrame = useRef(0);
   const releaseTimer = useRef(0);
   const source = portrait ? OPENING.portrait : OPENING.desktop;
+
+  useEffect(() => { if (mode === 'ready') markOpeningSettled(); }, [mode]);
 
   const rampVolume = useCallback((target, duration, done) => {
     cancelAnimationFrame(volumeFrame.current);

@@ -15,12 +15,12 @@
   "desktop": {
     "width": 1920,
     "height": 1080,
-    "bytes": 13463897
+    "bytes": 5970033
   },
   "portrait": {
     "width": 720,
     "height": 1280,
-    "bytes": 6391396
+    "bytes": 3059086
   },
   "textBakedIn": false,
   "audioGain": 0.3

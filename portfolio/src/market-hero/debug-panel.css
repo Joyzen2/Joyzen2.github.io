@@ -1,0 +1,15 @@
+.debug-panel{position:fixed;top:16px;right:16px;z-index:50;width:min(300px,calc(100vw - 32px));max-height:calc(100svh - 32px);overflow:auto;padding:14px 14px 12px;border:1px solid rgba(207,212,220,.22);border-radius:8px;background:rgba(8,10,13,.86);backdrop-filter:blur(10px);color:#dfe3e8;font:12px/1.5 Manrope,'PingFang SC',sans-serif;display:grid;gap:12px}
+.debug-head{display:flex;align-items:center;justify-content:space-between}
+.debug-head strong{font-weight:600;letter-spacing:.04em}
+.debug-panel button,.debug-panel select,.debug-toggle{appearance:none;border:1px solid rgba(207,212,220,.3);border-radius:5px;background:rgba(255,255,255,.04);color:#e8ebef;font:inherit;font-size:11px;padding:5px 9px;cursor:pointer}
+.debug-panel button:hover,.debug-toggle:hover{border-color:#e8ebef}
+.debug-panel button.is-active{background:#e8ebef;color:#0b0d10;border-color:#e8ebef}
+.debug-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.debug-field{display:grid;gap:6px}
+.debug-field>span,.debug-slider>span{color:#9aa2ad;font-size:11px}
+.debug-field b,.debug-slider b{color:#eef1f4;font-weight:500;font-variant-numeric:tabular-nums;margin-left:4px}
+.debug-stages{display:flex;flex-wrap:wrap;gap:5px}
+.debug-slider{display:grid;gap:2px}
+.debug-panel input[type=range]{width:100%;accent-color:#cfd4dc}
+.debug-stats{margin:0;color:#8f98a3;font-size:10.5px;font-variant-numeric:tabular-nums}
+.debug-toggle{position:fixed;top:16px;right:16px;z-index:50;background:rgba(8,10,13,.8)}

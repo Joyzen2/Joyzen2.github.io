@@ -49,3 +49,9 @@
 @media(max-width:560px){.particle-hero{grid-template-rows:80px 1fr 112px;min-height:760px}.particle-header{padding:16px 20px}.particle-brand>span:first-child{font-size:24px}.particle-brand>span:last-child{display:none}.particle-main{padding:0 20px 37px}.particle-copy h1{font-size:39px;line-height:1.28}.particle-role{font-size:10px;letter-spacing:0;margin-top:17px}.particle-role>span{padding-inline:4px}.particle-description{font-size:11px;margin-top:9px;line-height:1.9}.particle-mobile-break{display:block}.particle-actions{gap:9px;margin-top:21px}.particle-button{font-size:10px;gap:11px;padding:0 13px;min-height:40px}.particle-bottom{grid-template-columns:1fr 1fr 1fr;gap:12px;padding:0 20px 42px}.particle-field{display:block}.particle-field>span{display:block}.particle-field>span:first-child{font-size:10px;white-space:nowrap}.particle-field>span:nth-child(2){font-size:6px;letter-spacing:.04em;line-height:1.8;margin-top:4px}.particle-field>svg{display:none}.particle-playback{position:absolute;bottom:9px;right:20px;padding:5px 0;font-size:8px}.particle-scene video,.particle-poster{width:170%;left:-35%;object-position:center 42%}.particle-shade{background:linear-gradient(180deg,rgba(0,0,0,.18),transparent 25%,transparent 40%,rgba(0,0,0,.34) 56%,rgba(0,0,0,.9) 86%,#000 100%)}.particle-nav{left:20px;right:20px}}
 @media(max-width:350px){.particle-copy h1{font-size:35px}.particle-contact{gap:9px}.particle-header-actions{gap:8px}.particle-bottom{gap:9px}.particle-field>span:nth-child(2){font-size:5.5px;letter-spacing:0}}
 @media(prefers-reduced-motion:reduce){.particle-hero *{transition:none!important}}
+
+/* Two complete Chinese lines remain unbroken at narrow viewport widths. */
+.particle-copy h1{font-size:clamp(24px,4.2vw,64px)}
+.hero-title-line{white-space:nowrap}
+@media(max-width:900px){.particle-copy h1{font-size:clamp(24px,5.5vw,46px)}}
+@media(max-width:560px){.particle-copy h1{font-size:clamp(22px,6.1vw,34px)}}

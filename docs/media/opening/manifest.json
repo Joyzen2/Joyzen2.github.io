@@ -1,0 +1,27 @@
+{
+  "rendered": "2026-10-31",
+  "duration": 26,
+  "fps": 60,
+  "frameCount": 1560,
+  "sceneSha256": "1149c3392c822be518f118896dbe10f65b07398f7e2ad973e3ba9c00ccba8132",
+  "sourceAudioSha256": "74ce6f1241865b27bf20f7afa7a844d816c7966952f4855523d1778dff15d545",
+  "sourceAudioDuration": 25,
+  "view": {
+    "yaw": -15.5,
+    "pitch": 0,
+    "dolly": 0.8,
+    "spread": 1.5
+  },
+  "desktop": {
+    "width": 1920,
+    "height": 1080,
+    "bytes": 13463897
+  },
+  "portrait": {
+    "width": 720,
+    "height": 1280,
+    "bytes": 6391396
+  },
+  "textBakedIn": false,
+  "audioGain": 0.3
+}

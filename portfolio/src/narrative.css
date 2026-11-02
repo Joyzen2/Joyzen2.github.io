@@ -1,0 +1,131 @@
+/* Screens 02–05 share one background, one heading system and one quiet rhythm. */
+@font-face{font-family:'Section Serif';src:url('/media/section-serif.woff2') format('woff2');font-weight:600;font-display:swap}
+
+html:has(.creative-page){background:#020407;scrollbar-color:#4a5562 #020407}
+.creative-page{--page:#020407;--hair:rgba(219,228,237,.12);--quiet:#8d9aa9;background:var(--page)}
+.creative-page .particle-hero,.creative-page .narrative-section,.creative-page .recognition-section,.creative-page .contact{background:var(--page)}
+
+/* 01→02 share one surface. The scene stays fixed behind the hero and the top of 02 while
+   their content scrolls over it; usePortfolioMotion fades it and parks it once 02 has passed.
+   The size container moves from the hero to the scene so the cover framing still fits. */
+.creative-page .particle-hero{container-type:normal;--hero-fold:1}
+.creative-page .particle-hero::after{opacity:var(--hero-fold)}
+.creative-page .particle-hero .particle-scene{position:fixed;inset:0 0 auto;height:100svh;container-type:size;opacity:max(var(--scene-out,1),var(--scene-back,0))}
+.creative-page .particle-scene.is-parked{visibility:hidden}
+.creative-page .particle-scene.is-parked .opening-live{transform:translateY(-300vh)}
+/* 02 opens transparent over the surface and turns solid behind the panels. */
+.creative-page .research-areas{background:linear-gradient(180deg,rgba(2,4,7,0) 0,rgba(2,4,7,0) 220px,var(--page) 380px)}
+/* Reduced motion keeps the hero as its own still frame, as before. */
+@media(prefers-reduced-motion:reduce){
+  .creative-page .particle-hero{container-type:size}
+  .creative-page .particle-hero .particle-scene{position:absolute;inset:0;height:auto}
+  .creative-page .research-areas{background:var(--page)}
+}
+
+.creative-page .narrative-section{position:relative;padding-block:clamp(52px,4.8vw,80px)}
+.creative-page .research-areas{padding-top:clamp(72px,7vw,112px)}
+.creative-page .recognition-section.narrative-section{padding-bottom:clamp(40px,3.6vw,60px)}
+
+/* Heading: index label, serif title, lede; an optional hint sits at the right. */
+.narrative-head{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:40px;align-items:end;margin-bottom:clamp(36px,4vw,56px)}
+.narrative-index{grid-column:1/-1;display:flex;align-items:center;gap:14px;margin:0 0 22px;font:500 11px/1 Manrope,sans-serif;letter-spacing:.24em;color:var(--quiet)}
+.narrative-index::before{content:'';width:28px;height:1px;background:currentColor;opacity:.6}
+.narrative-title{grid-column:1;margin:0;font-family:'Section Serif','Songti SC','Noto Serif SC','Source Han Serif SC',serif;font-weight:600;font-size:clamp(30px,3.4vw,54px);line-height:1.32;letter-spacing:.05em;color:#e6ebf1;text-wrap:balance}
+.narrative-phrase{display:inline-block}
+.narrative-lede{grid-column:1;margin:18px 0 0;max-width:36em;font-size:15px;line-height:1.9;color:#a3b0bf}
+.narrative-hint{grid-column:2;grid-row:2/span 2;align-self:end;margin:0;font-size:12px;letter-spacing:.04em;color:#7d8a99;white-space:nowrap}
+
+/* 02 · Research areas */
+.research-accordion .ag-panel{background:#0b0f15;border:1px solid rgba(219,228,237,.08);box-shadow:none}
+.research-accordion .ag-panel:focus-visible{box-shadow:0 0 0 2px var(--ag-accent)}
+/* The line drawings stay visible behind the copy, just quiet enough to read over. */
+.research-accordion .ag-panel__overlay{background:linear-gradient(180deg,rgba(11,15,21,0) 30%,rgba(11,15,21,.55) 100%),color-mix(in srgb,#0b0f15 calc(var(--ag-dim,.35)*100%),transparent)}
+.research-accordion .ag-panel__content{background:linear-gradient(180deg,rgba(11,15,21,0),rgba(11,15,21,.5) 26%,rgba(11,15,21,.62))}
+.research-accordion .ag-panel__peek{background:linear-gradient(180deg,rgba(11,15,21,0),rgba(11,15,21,.55) 40%,rgba(11,15,21,.7))}
+.area-copy,.area-peek{padding:clamp(22px,2.4vw,34px)}
+.area-copy{max-width:600px}
+.area-index{display:flex;align-items:baseline;gap:12px;margin:0 0 14px;font:500 10.5px/1 Manrope,sans-serif;letter-spacing:.22em;color:#93a1b1}
+.area-index span{color:#e6ebf1}
+.area-title{margin:0;font-family:'Section Serif','Songti SC','Noto Serif SC',serif;font-weight:600;font-size:clamp(24px,2.1vw,32px);line-height:1.3;letter-spacing:.06em;color:#eef2f6}
+.area-statement{margin:10px 0 0;max-width:26em;font-size:15px;line-height:1.75;color:#c9d2dc}
+.area-peek .area-statement{font-size:13.5px;color:#aeb9c5}
+.area-scope{display:flex;flex-wrap:wrap;gap:6px 0;margin:16px 0 0;padding:0;list-style:none;font-size:12px;letter-spacing:.03em;color:#93a1b1}
+.area-scope li+li::before{content:'·';padding-inline:10px;color:#5e6b79}
+.area-links{margin:22px 0 0;padding:0;list-style:none;border-top:1px solid var(--hair)}
+.area-links a{display:grid;grid-template-columns:5.6em minmax(0,1fr) 14px;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid rgba(219,228,237,.08);color:#dfe5ec;font-size:13.5px;line-height:1.5;text-decoration:none;transition:color .25s,padding-left .35s cubic-bezier(.2,.7,.2,1)}
+.area-links a:hover,.area-links a:focus-visible{color:#fff;padding-left:6px}
+.area-link-type{font-size:11px;letter-spacing:.04em;color:#8a98a8}
+.area-link-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.area-links svg,.area-more svg{width:14px;height:14px}
+.area-more{display:inline-flex;align-items:center;gap:8px;margin-top:16px;font-size:12px;color:#aab6c3;text-decoration:underline;text-underline-offset:5px;text-decoration-color:rgba(170,182,195,.4)}
+.area-more:hover{color:#fff}
+.area-stack{display:grid;gap:18px;margin:0;padding:0;list-style:none}
+.area-card{overflow:hidden;border:1px solid rgba(219,228,237,.1);border-radius:14px;background:#0b0f15}
+.area-card img{display:block;width:100%;aspect-ratio:16/8;object-fit:cover}
+.area-card .area-copy{padding:22px 20px 24px}
+.area-card .area-link-title{white-space:normal}
+
+/* 03 · About */
+.about-layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(280px,.7fr);gap:clamp(48px,7vw,120px);align-items:start}
+.about-text .narrative-head{margin-bottom:28px}
+.about-body p{margin:0;max-width:34em;font-size:clamp(15px,1.15vw,17px);line-height:2;color:#c3ccd6}
+.about-body p+p{margin-top:14px}
+.about-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 40px;margin:44px 0 0;padding-top:28px;border-top:1px solid var(--hair)}
+.about-facts dt{margin-bottom:8px;font-size:11px;letter-spacing:.12em;color:#8492a2}
+.about-facts dd{margin:0;font-size:15px;line-height:1.6;color:#e3e8ee}
+.about-facts small{display:block;margin-top:3px;font-size:12px;color:#93a0af}
+.about-facts a{color:inherit;text-decoration:underline;text-underline-offset:4px;text-decoration-color:rgba(219,228,237,.35);overflow-wrap:anywhere}
+.about-actions{margin-top:32px}
+.creative-page .about-photo{width:100%;max-width:400px;margin:0;justify-self:end}
+
+/* 05 · Experience: the stages stand on one rising line that crosses the page. Everything below
+   that line is open, so the surface shows through and runs on into the footer without an edge. */
+.creative-page .experience-section{--journey-pad:clamp(64px,7vw,110px);--journey-band:clamp(170px,15vw,230px);padding-bottom:var(--journey-pad);background:linear-gradient(180deg,var(--page) calc(100% - var(--journey-pad) - var(--journey-band)),transparent 0)}
+.creative-page .experience-journey{padding-top:0}
+.creative-page .journey-curve{top:auto;bottom:var(--journey-pad);left:0;width:100%;height:var(--journey-band);z-index:0}
+.creative-page .journey-grid{position:relative;z-index:1;align-items:end;grid-template-columns:repeat(4,minmax(0,1fr))}
+.creative-page .journey-entry{padding:0 clamp(20px,2.6vw,44px) calc(var(--node-rise,0px) + 40px) 0}
+.creative-page .journey-dot{top:auto;bottom:calc(var(--node-rise,0px) - 4px);left:-4px;background:#dbe4ed}
+.creative-page .journey-dot::after{top:auto;bottom:14px;left:3.5px;height:20px;background:#4a5562}
+.journey-date{margin:0;font:500 12px/1.6 Manrope,sans-serif;font-variant-numeric:tabular-nums;color:#93a1b1}
+.creative-page .journey-name{margin:10px 0 4px;font-size:clamp(18px,1.5vw,22px);line-height:1.45;font-weight:500;letter-spacing:.01em;color:#e6ebf1}
+.creative-page .journey-type{margin:0;font-size:13px;line-height:1.7;color:#a3b0bf}
+.journey-text{margin:14px 0 0;max-width:24em;font-size:14px;line-height:1.85;color:#b7c1cc}
+.journey-tags{margin:12px 0 0;font-size:12px;letter-spacing:.03em;color:#8492a2}
+.journey-links{margin:14px 0 0;padding:0;list-style:none}
+.journey-links a{display:inline-flex;align-items:center;gap:10px;min-height:32px;font-size:13px;line-height:1.5;color:#dfe5ec;text-decoration:underline;text-underline-offset:5px;text-decoration-color:rgba(219,228,237,.3);transition:color .25s,text-decoration-color .25s}
+.journey-links a:hover,.journey-links a:focus-visible{color:#fff;text-decoration-color:currentColor}
+.journey-links svg{flex:none;width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.3}
+
+/* Footer: fully open, continuing 05's lower edge (see closingThread.js). It creates no stacking
+   context of its own, so the ribbon can blend with the surface behind. */
+.creative-page .contact{position:relative;overflow:hidden;background:transparent}
+.creative-page .contact-inner{position:relative;z-index:1}
+/* The footer's one sentence, right beneath the line. */
+.creative-page .contact-links p{margin-bottom:18px;max-width:none;font-size:clamp(15px,1.4vw,19px);line-height:1.7;color:#d3dae2}
+/* The licensed ribbon, when present: fixed like the surface it continues, and on a black
+   background so `screen` leaves only its light. closingThread reveals it. */
+.closing-ribbon{position:fixed;inset:0;z-index:0;visibility:hidden;pointer-events:none;mix-blend-mode:screen;opacity:var(--ribbon-in,0)}
+.closing-ribbon-layer{position:absolute;left:0;width:100%}
+
+@media(max-width:1100px){
+  .about-layout{grid-template-columns:minmax(0,1fr) minmax(240px,320px);gap:48px}
+}
+@media(max-width:900px){
+  .creative-page .experience-section{--journey-pad:48px;background:linear-gradient(180deg,var(--page) calc(100% - 200px),transparent 100%)}
+  .creative-page .journey-curve{display:none}
+  .creative-page .journey-grid{align-items:start;grid-template-columns:1fr;gap:40px;padding-left:22px;border-left:1px solid rgba(219,228,237,.22)}
+  .creative-page .journey-entry{padding:0}
+  .creative-page .journey-dot{top:5px;bottom:auto;left:-26.5px}
+  .creative-page .journey-dot::after{display:none}
+  .journey-text{max-width:36em}
+}
+@media(max-width:760px){
+  .creative-page .narrative-section{padding-block:48px}
+  .creative-page .research-areas{padding-top:64px}
+  .narrative-head{grid-template-columns:1fr}
+  .narrative-hint{grid-column:1;grid-row:auto;margin-top:14px;white-space:normal}
+  .about-layout{grid-template-columns:1fr}
+  .about-facts{grid-template-columns:1fr;gap:20px}
+  .creative-page .about-photo{justify-self:center;max-width:340px}
+}

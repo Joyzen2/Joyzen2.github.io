@@ -76,3 +76,5 @@
 .gallery-card-copy[data-open=true][data-art=competition] .gallery-image-typography{padding-left:156px}
 .gallery-card-copy[data-open=true][data-art=competition] .gallery-image-typography strong{font-size:18px}
 @media(max-width:760px){.gallery-card-emblem{width:98px;top:8px}.gallery-card-copy[data-art=competition] .gallery-image-typography{padding-left:101px;padding-right:11px}.gallery-card-copy[data-art=competition] .gallery-image-typography strong{font-size:12px;line-height:1.4}.gallery-card-copy[data-open=true] .gallery-card-emblem{width:134px;top:2px}.gallery-card-copy[data-open=true][data-art=competition] .gallery-image-typography{padding-left:135px;padding-right:15px}.gallery-card-copy[data-open=true][data-art=competition] .gallery-image-typography strong{font-size:16px}}
+
+.gallery-image-typography:has(>span:only-child){justify-content:flex-end}

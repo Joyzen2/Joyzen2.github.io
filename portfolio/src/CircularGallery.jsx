@@ -648,14 +648,15 @@ const CircularGallery = ({
               points.textContent = card.item.cardPoints || '';
               content.append(title, summary, points, detail);
               entry.cover.append(image);
-              if (card.item.imageTitle) {
+              if (card.item.imageTitle || card.item.imageMeta) {
                 const typography = document.createElement('div');
                 typography.className = 'gallery-image-typography';
                 const imageTitle = document.createElement('strong');
                 imageTitle.textContent = card.item.imageTitle;
                 const imageMeta = document.createElement('span');
                 imageMeta.textContent = card.item.imageMeta || '';
-                typography.append(imageTitle, imageMeta);
+                if (card.item.imageTitle) typography.append(imageTitle);
+                typography.append(imageMeta);
                 entry.cover.append(typography);
               }
               if (card.item.emblem) {

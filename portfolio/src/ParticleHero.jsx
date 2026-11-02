@@ -1,95 +1,121 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import './particle-hero.css';
 import HoverLabel from './HoverLabel.jsx';
-
-const asset = (name) => `${import.meta.env.BASE_URL}media/${name}`;
+import MarketHero from './market-hero/MarketHero.jsx';
+import { heroApi } from './market-hero/hero-link.js';
+import { narrative } from './market-hero/timeline.js';
+import { OPENING } from './market-hero/opening-config.js';
+import useOpeningPlayback from './market-hero/useOpeningPlayback.js';
+import './market-hero/hero-home.css';
 const MACRO = 'https://joyzen2.github.io/macro/';
+const DebugPanel = import.meta.env.DEV ? lazy(() => import('./market-hero/DebugPanel.jsx')) : null;
+const COPY = ['在无序中，看见可能', 'Possibility in disorder'];
 
 function Arrow({ straight = false }) {
   return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d={straight ? 'M4 12h16m-6-6 6 6-6 6' : 'M5 19 19 5M5 5h14v14'} stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
+function SoundIcon({ muted }) {
+  return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z" />{muted ? <path d="m16 9 6 6m0-6-6 6" /> : <><path d="M15 8a6 6 0 0 1 0 8" /><path d="M18 5a10 10 0 0 1 0 14" /></>}</svg>;
+}
+function PlaybackIcon({ paused }) {
+  return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">{paused ? <path d="m9 5 11 7-11 7V5Z" /> : <path d="M8 5v14M16 5v14" />}</svg>;
+}
 
 export default function ParticleHero() {
-  const section = useRef(null);
-  const video = useRef(null);
-  const [menu, setMenu] = useState(false);
-  const [paused, setPaused] = useState(false);
-  const [playing, setPlaying] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const [reduced, setReduced] = useState(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
-
-  useEffect(() => {
-    const preference = matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReduced(preference.matches);
-    preference.addEventListener('change', update);
-    return () => preference.removeEventListener('change', update);
+  const section = useRef(null), modeRef = useRef('opening');
+  const [menu, setMenu] = useState(false), [backgroundPaused, setBackgroundPaused] = useState(false);
+  const [failed, setFailed] = useState(false), [liveReady, setLiveReady] = useState(false);
+  const firstLiveFrame = useRef(false);
+  const [debug] = useState(() => Boolean(DebugPanel) && new URLSearchParams(location.search).has('debug'));
+  const paintTime = useCallback((time, settled = false) => {
+    const element = section.current;
+    if (!element) return;
+    const state = settled ? { first: 1, second: 1, shine: 1, glint: 0 } : narrative(time);
+    element.style.setProperty('--hero-t1', state.first.toFixed(4));
+    element.style.setProperty('--hero-t2', state.second.toFixed(4));
+    element.style.setProperty('--hero-shine', state.shine.toFixed(4));
+    element.style.setProperty('--hero-glint', state.glint.toFixed(4));
   }, []);
+  const opening = useOpeningPlayback({ section, onTime: paintTime });
+  const ready = opening.mode === 'ready';
+  const showSite = ready || opening.siteVisible;
+  modeRef.current = opening.mode;
+  const onLiveFrame = useCallback(time => {
+    if (!firstLiveFrame.current) { firstLiveFrame.current = true; setLiveReady(true); }
+    if (modeRef.current === 'ready') paintTime(time, true);
+  }, [paintTime]);
 
+  useEffect(() => { if (ready) paintTime(OPENING.duration, true); }, [ready, paintTime]);
   useEffect(() => {
-    const v = video.current;
-    if (!v || failed) return;
-    const bounds = section.current.getBoundingClientRect();
-    let visible = bounds.bottom > 0 && bounds.top < innerHeight;
-    const sync = () => {
-      if (paused || reduced || document.hidden || !visible) v.pause();
-      else v.play().catch(() => setPlaying(false));
-    };
-    const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; sync(); }, { threshold: .05 });
-    observer.observe(section.current);
-    document.addEventListener('visibilitychange', sync);
-    sync();
-    return () => { observer.disconnect(); document.removeEventListener('visibilitychange', sync); v.pause(); };
-  }, [paused, reduced, failed]);
-
-  useEffect(() => {
-    const escape = (event) => { if (event.key === 'Escape') setMenu(false); };
+    const escape = event => { if (event.key === 'Escape') setMenu(false); };
     const wide = matchMedia('(min-width: 901px)');
     const close = () => { if (wide.matches) setMenu(false); };
-    window.addEventListener('keydown', escape);
-    wide.addEventListener('change', close);
+    window.addEventListener('keydown', escape); wide.addEventListener('change', close);
     return () => { window.removeEventListener('keydown', escape); wide.removeEventListener('change', close); };
   }, []);
-
-  function togglePlayback() {
-    if (playing) setPaused(true);
-    else {
-      setPaused(false);
-      video.current?.play().catch(() => setPlaying(false));
-    }
+  if (import.meta.env.DEV) {
+    window.__marketHero = heroApi;
+    window.__homeOpening = { replay: opening.replay, skip: () => opening.finish('skip'), getState: () => ({ mode: opening.mode, siteVisible: showSite, liveReady, muted: opening.muted, reduced: opening.reduced, hasVideo: opening.hasVideo, portrait: opening.portrait, currentTime: opening.video.current?.currentTime ?? 0 }) };
   }
 
-  function mediaFailed() { setFailed(true); setPlaying(false); }
-
-  return <section ref={section} className="particle-hero" id="top" aria-labelledby="particle-title" data-reduced={reduced}>
-    <div className="opening-curtain" aria-hidden="true"><span>ZHENG JIN</span><span>RESEARCH & SYSTEMS</span></div>
+  return <section ref={section} className={`particle-hero${opening.portrait ? ' is-portrait' : ''}`} id="top" aria-labelledby="particle-title" data-mode={opening.mode} data-site-visible={showSite} data-reduced={opening.reduced}>
     <div className="particle-scene" aria-hidden="true">
-      <img src={asset('silver-particles-poster.jpg')} alt="" className="particle-poster" fetchPriority="high" />
-      {!failed && <video ref={video} muted loop playsInline preload="metadata" poster={asset('silver-particles-poster.jpg')} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onError={mediaFailed}><source src={asset('silver-particles.mp4')} type="video/mp4" onError={mediaFailed} /></video>}
-    </div>
-    <div className="particle-shade" aria-hidden="true" />
-    <header className="particle-header">
-      <a className="particle-brand" href="#top" aria-label="金正，返回首页"><span>金正</span><span>ZHENG JIN</span></a>
-      <nav id="particle-navigation" className={`particle-nav${menu ? ' is-open' : ''}`} aria-label="主导航" onClick={() => setMenu(false)}>
-        <a href="#work">精选研究</a><a href={MACRO} target="_blank" rel="noreferrer">宏观研究站</a><a href="#about">关于我</a><a href="#notes">研究笔记</a>
-      </nav>
-      <div className="particle-header-actions"><a href="#contact" className="particle-contact"><HoverLabel alternate="聊一聊">联系我</HoverLabel><Arrow /></a><button className="particle-menu" aria-expanded={menu} aria-controls="particle-navigation" onClick={() => setMenu(!menu)}>{menu ? '关闭' : '菜单'}</button></div>
-    </header>
-    <div className="particle-main">
-      <div className="particle-copy">
-        <h1 id="particle-title"><span className="hero-title-mask"><span className="hero-title-line">在变化中，</span></span><span className="hero-title-mask"><span className="hero-title-line">寻找结构。</span></span></h1>
-        <p className="particle-role">宏观与量化研究 <span>·</span> AI 投研工具开发</p>
-        <p className="particle-description">研究信息如何进入价格，<br className="particle-mobile-break" />也把研究方法做成工具。</p>
-        <div className="particle-actions"><a className="particle-button particle-button-light" href="#work"><HoverLabel alternate="探索研究成果">查看精选研究</HoverLabel><Arrow straight /></a><a className="particle-button particle-button-dark" href={MACRO} target="_blank" rel="noreferrer"><HoverLabel alternate="阅读完整研究">进入宏观研究站</HoverLabel><Arrow /></a></div>
+      <img className="opening-poster" src={opening.portrait ? OPENING.portraitPoster : OPENING.poster} alt="" fetchPriority="high" />
+      {opening.liveMounted && <div className={`opening-live${liveReady ? ' is-ready' : ''}`}>
+        <div className="opening-live-frame">
+          <MarketHero apiRef={heroApi} paused={!ready || backgroundPaused} reduced={opening.reduced} startTime={OPENING.duration} onFrame={onLiveFrame} onUnavailable={() => setFailed(true)} />
+        </div>
+      </div>}
+      <div className={`opening-video-layer${ready ? ' is-finished' : ''}`}>
+        <video ref={opening.video} className="opening-video" src={opening.hasVideo ? opening.source : undefined} muted playsInline preload={opening.hasVideo ? 'auto' : 'none'} disablePictureInPicture tabIndex={-1} />
       </div>
     </div>
-    <div className="particle-bottom">
+    <div className="market-hero-shade" aria-hidden="true" />
+    <div className="particle-shade" aria-hidden="true" />
+
+    {!ready && <div className="opening-controls" role="group" aria-label="开场播放控制">
+      <div className="opening-sound-wrap">
+        {opening.soundHint && <span className="opening-sound-hint" aria-hidden="true">配乐</span>}
+        <button type="button" className="opening-icon" onClick={opening.toggleSound} aria-label={opening.muted ? '开启声音' : '静音'} aria-pressed={!opening.muted} title={opening.muted ? '开启声音' : '静音'}><SoundIcon muted={opening.muted} /></button>
+      </div>
+      <button type="button" className="opening-icon" onClick={opening.toggleVideo} aria-label={opening.videoPaused ? '继续开场' : '暂停开场'} title={opening.videoPaused ? '继续开场' : '暂停开场'}><PlaybackIcon paused={opening.videoPaused} /></button>
+      <button type="button" className="opening-skip" onClick={() => opening.finish('skip')}>跳过开场<Arrow straight /></button>
+    </div>}
+
+    <header className="particle-header" inert={!showSite} aria-hidden={!showSite}>
+      <a className="particle-brand" href="#top" aria-label="金正，返回首页"><span>金正</span><span>ZHENG JIN / PERSONAL LAB</span></a>
+      <nav id="particle-navigation" className={`particle-nav${menu ? ' is-open' : ''}`} aria-label="主导航" onClick={() => setMenu(false)}>
+        <a href="#research">研究方向</a><a href={MACRO} target="_blank" rel="noreferrer">宏观研究站</a><a href="#about">关于我</a><a href="#experience">经历</a>
+      </nav>
+      <div className="particle-header-actions">
+        {!opening.reduced && <button type="button" className="opening-replay" onClick={opening.replay}>重播开场</button>}
+        <a href="#contact" className="particle-contact"><HoverLabel alternate="聊一聊">联系我</HoverLabel><Arrow /></a>
+        <button type="button" className="particle-menu" aria-expanded={menu} aria-controls="particle-navigation" onClick={() => setMenu(!menu)}>{menu ? '关闭' : '菜单'}</button>
+      </div>
+    </header>
+
+    <div className="home-copy">
+      <h1 id="particle-title" className="home-title" aria-label={`${COPY[0]}。${COPY[1]}`}>
+        <span className="home-title-cn"><span>{COPY[0]}</span><span className="home-title-gleam" aria-hidden="true">{COPY[0]}</span></span>
+        <span className="home-title-en" lang="en"><span>{COPY[1]}</span><span className="home-title-gleam" aria-hidden="true">{COPY[1]}</span></span>
+      </h1>
+    </div>
+    <div className="home-introduction" inert={!showSite} aria-hidden={!showSite}>
+      <p className="home-name">金正 <span>/ ZHENG JIN</span></p>
+      <p className="particle-role">宏观与量化研究 <span>·</span> AI 投研工具开发</p>
+      <div className="particle-actions">
+        <a className="particle-button particle-button-light" href="#research">查看研究<Arrow straight /></a>
+        <a className="particle-button particle-button-dark" href="#about">关于我<Arrow straight /></a>
+      </div>
+    </div>
+    <div className="particle-bottom" inert={!showSite} aria-hidden={!showSite}>
       <a href={MACRO} target="_blank" rel="noreferrer" className="particle-field"><span>宏观利率</span><span>MACRO & RATES</span><Arrow /></a>
       <a href="/csi500/" className="particle-field"><span>量化策略</span><span>QUANTITATIVE RESEARCH</span><Arrow /></a>
       <a href="https://joyzen2.github.io/ai-research/" target="_blank" rel="noreferrer" className="particle-field"><span>AI 投研工具</span><span>RESEARCH AGENTS</span><Arrow /></a>
-      <button className="particle-playback" onClick={togglePlayback} disabled={failed || reduced} aria-label={failed ? '背景使用静态封面' : reduced ? '已按系统设置减少动态效果' : playing ? '暂停背景动画' : '播放背景动画'}>
-        {playing && !reduced ? <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3v10M11 3v10" stroke="currentColor" strokeWidth="1.5" /></svg> : <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m5 3 8 5-8 5z" fill="currentColor" /></svg>}
-        <span>{failed || reduced ? '静态' : playing ? '暂停' : '播放'}</span>
+      <button type="button" className="particle-playback" onClick={() => setBackgroundPaused(value => !value)} disabled={!ready || failed || opening.reduced} aria-pressed={backgroundPaused} aria-label={failed || opening.reduced ? '背景使用静态曲面' : backgroundPaused ? '播放背景动画' : '暂停背景动画'}>
+        <PlaybackIcon paused={backgroundPaused || failed || opening.reduced} /><span>{failed || opening.reduced ? '静态' : backgroundPaused ? '播放' : '暂停'}</span>
       </button>
     </div>
+    {debug && ready && <Suspense fallback={null}><DebugPanel api={heroApi} /></Suspense>}
   </section>;
 }

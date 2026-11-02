@@ -5,3 +5,10 @@ __pycache__/
 PRODUCT.md
 DESIGN.md
 .impeccable/
+
+# 本机密钥（React Bits Pro 授权码等），仓库是公开的
+.env
+.env.local
+
+# React Bits Pro 组件源码：授权条款不允许进公开仓库，只用来本机构建
+portfolio/src/vendor/

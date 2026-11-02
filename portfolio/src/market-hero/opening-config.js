@@ -1,0 +1,14 @@
+// The media is exported from the exact same scene/view, at 60 frames per second.
+export const OPENING = Object.freeze({
+  duration: 26,
+  warmAt: 23.8,
+  siteAt: 24.1,
+  seenKey: 'jin.portfolio.opening.v1',
+  soundKey: 'jin.portfolio.sound.v2',
+  desktop: '/media/opening/market-desktop.mp4',
+  portrait: '/media/opening/market-portrait.mp4',
+  poster: '/media/opening/surface-desktop.jpg',
+  portraitPoster: '/media/opening/surface-portrait.jpg',
+});
+export function readPreference(key) { try { return localStorage.getItem(key); } catch { return null; } }
+export function writePreference(key, value) { try { localStorage.setItem(key, value); } catch { /* Private browsing still gets a usable homepage. */ } }

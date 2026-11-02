@@ -20,10 +20,11 @@ import markdown
 
 ROOT = pathlib.Path(__file__).parent
 CONTENT, OUT, CHARTS = ROOT / "content", ROOT / "docs", ROOT / "charts"
-FONT_SRC = ROOT.parent / "fonts-src" / "SmileySans-Oblique.ttf"
+FONT_SRC = next((d / "SmileySans-Oblique.ttf" for d in (ROOT.parent / "fonts-src", pathlib.Path.home() / "Desktop/简历项目/作品集/fonts-src")
+                 if (d / "SmileySans-Oblique.ttf").exists()), ROOT.parent / "fonts-src" / "SmileySans-Oblique.ttf")
 FONT_OUT = ROOT / "assets" / "fonts" / "jz-display.woff2"
 SITE = "金正 · 宏观利率研究"
-NAV = [("研究", "research/macro-vs-expectations/"), ("点评", "notes/"), ("复盘", "reviews/"), ("工具", "tools/bond-analytics/"), ("关于", "about/")]
+NAV = [("研究", "research/"), ("点评", "notes/"), ("复盘", "reviews/"), ("工具", "tools/bond-analytics/"), ("关于", "about/")]
 KIND_NAME = {"note": "点评", "review": "复盘", "research": "研究", "tool": "工具"}
 
 

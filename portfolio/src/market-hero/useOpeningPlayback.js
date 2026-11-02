@@ -19,6 +19,10 @@ export default function useOpeningPlayback({ section, onTime }) {
   const [soundHint, setSoundHint] = useState(mode === 'opening');
   // The browser refused audible autoplay, so the opening runs silent until the visitor acts.
   const [soundBlocked, setSoundBlocked] = useState(false);
+  // The browser refused even silent autoplay, so the film waits for a tap.
+  const [playBlocked, setPlayBlocked] = useState(false);
+  const [waiting, setWaiting] = useState(false);
+  const [skipNudged, setSkipNudged] = useState(false);
   const userPaused = useRef(false);
   const volumeFrame = useRef(0);
   const releaseTimer = useRef(0);
@@ -48,7 +52,7 @@ export default function useOpeningPlayback({ section, onTime }) {
     setLiveMounted(true);
     setMode('ready');
     setSiteVisible(true);
-    setSoundHint(false); setSoundBlocked(false);
+    setSoundHint(false); setSoundBlocked(false); setPlayBlocked(false); setWaiting(false);
     onTime(OPENING.duration, true);
     rampVolume(0, 220, () => { if (modeRef.current === 'ready') video.current?.pause(); });
     clearTimeout(releaseTimer.current);
@@ -91,7 +95,7 @@ export default function useOpeningPlayback({ section, onTime }) {
     cancelAnimationFrame(volumeFrame.current);
     userPaused.current = false;
     modeRef.current = 'opening';
-    setHasVideo(true); setMode('opening'); setSiteVisible(false); setVideoPaused(false); setSoundHint(false); setSoundBlocked(false);
+    setHasVideo(true); setMode('opening'); setSiteVisible(false); setVideoPaused(false); setSoundHint(false); setSoundBlocked(false); setPlayBlocked(false);
     const media = video.current;
     if (media) {
       media.muted = readPreference(OPENING.soundKey) === 'off';
@@ -118,13 +122,8 @@ export default function useOpeningPlayback({ section, onTime }) {
     media.muted = readPreference(OPENING.soundKey) === 'off';
     media.volume = media.muted ? 0 : 1;
     setMuted(media.muted);
-    let active = true, frame = 0, stallTimer = 0;
-    const clearStall = () => clearTimeout(stallTimer);
-    const stalled = () => {
-      clearStall();
-      stallTimer = setTimeout(() => { if (active && !userPaused.current && !document.hidden) finish('timeout'); }, 8000);
-    };
-    const playing = () => { clearStall(); setVideoPaused(false); };
+    let active = true, frame = 0;
+    const playing = () => { setVideoPaused(false); setPlayBlocked(false); };
     const pause = () => setVideoPaused(true);
     const ended = () => finish('ended');
     const error = () => finish('error');
@@ -148,7 +147,8 @@ export default function useOpeningPlayback({ section, onTime }) {
         // and sound comes on with the visitor's first click or key, unless they turned it off.
         setSoundBlocked(!media.muted);
         media.muted = true; setMuted(true);
-        media.play().catch(() => { if (active) finish('blocked'); });
+        // A few browsers refuse silent autoplay too (iOS in Low Power Mode). A tap still starts it.
+        media.play().catch(refusal => { if (active && refusal.name !== 'AbortError') setPlayBlocked(true); });
       });
     };
     const visibility = () => {
@@ -162,40 +162,82 @@ export default function useOpeningPlayback({ section, onTime }) {
     };
     const observer = new IntersectionObserver(([entry]) => { if (!entry.isIntersecting) finish('scroll'); }, { threshold: 0 });
     if (section.current) observer.observe(section.current);
+    // The homepage takes over only once the film has really stopped: frames ahead in the buffer
+    // count as running however long the network pauses, and waiting for a person never counts.
+    let lastTime = media.currentTime, stuckSince = performance.now(), lastData = stuckSince;
+    const arrived = () => { lastData = performance.now(); };
+    const watchdog = setInterval(() => {
+      const now = performance.now();
+      if (media.paused || document.hidden || media.currentTime !== lastTime) {
+        lastTime = media.currentTime; stuckSince = lastData = now;
+        setWaiting(false);
+        return;
+      }
+      setWaiting(now - stuckSince > OPENING.waitHintAfter);
+      if (now - lastData > OPENING.quietLimit || now - stuckSince > OPENING.stuckLimit) finish('timeout');
+    }, 250);
     media.addEventListener('ended', ended); media.addEventListener('error', error);
     media.addEventListener('playing', playing); media.addEventListener('pause', pause);
-    media.addEventListener('waiting', stalled); media.addEventListener('stalled', stalled);
+    media.addEventListener('progress', arrived);
     media.addEventListener('seeked', paint); media.addEventListener('timeupdate', paint);
     document.addEventListener('visibilitychange', visibility); window.addEventListener('hashchange', navigate); window.addEventListener('keydown', keys);
-    const startup = setTimeout(() => { if (active && media.currentTime < .05 && !userPaused.current && !document.hidden) finish('timeout'); }, 6500);
-    tick(); play();
+    // A tab opened in the background keeps the film for when the visitor comes to it.
+    tick(); if (!document.hidden) play();
     return () => {
-      active = false; clearTimeout(startup); clearStall(); observer.disconnect();
+      active = false; clearInterval(watchdog); observer.disconnect();
       if (hasFrameCallback) media.cancelVideoFrameCallback(frame); else cancelAnimationFrame(frame);
       media.removeEventListener('ended', ended); media.removeEventListener('error', error);
       media.removeEventListener('playing', playing); media.removeEventListener('pause', pause);
-      media.removeEventListener('waiting', stalled); media.removeEventListener('stalled', stalled);
+      media.removeEventListener('progress', arrived);
       media.removeEventListener('seeked', paint); media.removeEventListener('timeupdate', paint);
       document.removeEventListener('visibilitychange', visibility); window.removeEventListener('hashchange', navigate); window.removeEventListener('keydown', keys);
     };
   }, [mode, source, hasVideo, finish, onTime, section, toggleVideo]);
 
   useEffect(() => {
-    if (!soundBlocked) return;
+    if (!soundBlocked && !playBlocked) return;
     const enable = event => {
       // The opening's own controls act for themselves; Escape and Tab don't count as asking for sound.
       if (event.target.closest?.('.opening-controls') || event.key === 'Escape' || event.key === 'Tab') return;
       if (navigator.userActivation && !navigator.userActivation.isActive) return;
       const media = video.current;
-      setSoundBlocked(false);
+      setSoundBlocked(false); setPlayBlocked(false);
       if (!media) return;
-      media.volume = 0; media.muted = false; setMuted(false);
-      rampVolume(1, 400);
-      if (media.paused && !userPaused.current) media.play().catch(() => {});
+      if (soundBlocked) {
+        media.volume = 0; media.muted = false; setMuted(false);
+        rampVolume(1, 400);
+      }
+      if (media.paused && !userPaused.current) media.play().catch(() => { if (modeRef.current === 'opening') finish('blocked'); });
     };
     window.addEventListener('click', enable, true); window.addEventListener('keydown', enable, true);
     return () => { window.removeEventListener('click', enable, true); window.removeEventListener('keydown', enable, true); };
-  }, [soundBlocked, rampVolume]);
+  }, [soundBlocked, playBlocked, rampVolume, finish]);
+
+  // While the film runs the page stays put, so a reflex scroll doesn't carry a first-time visitor
+  // past it. Skipping stays one click away, and the button answers the attempt.
+  useEffect(() => {
+    if (mode !== 'opening' || siteVisible) return;
+    let timer = 0;
+    const nudge = event => {
+      if (event.cancelable) event.preventDefault();
+      setSkipNudged(true);
+      clearTimeout(timer);
+      timer = setTimeout(() => setSkipNudged(false), 1400);
+    };
+    // Pinch and ctrl-wheel are zoom, which belongs to the visitor.
+    const wheel = event => { if (!event.ctrlKey) nudge(event); };
+    const touch = event => { if (event.touches.length === 1) nudge(event); };
+    const keys = event => { if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'End', 'Home'].includes(event.key)) nudge(event); };
+    window.addEventListener('wheel', wheel, { passive: false });
+    window.addEventListener('touchmove', touch, { passive: false });
+    window.addEventListener('keydown', keys);
+    return () => {
+      clearTimeout(timer); setSkipNudged(false);
+      window.removeEventListener('wheel', wheel);
+      window.removeEventListener('touchmove', touch);
+      window.removeEventListener('keydown', keys);
+    };
+  }, [mode, siteVisible]);
 
   useEffect(() => {
     if (!soundHint) return;
@@ -207,5 +249,5 @@ export default function useOpeningPlayback({ section, onTime }) {
     video.current?.pause();
   }, []);
 
-  return { video, mode, siteVisible, hasVideo, liveMounted, portrait, source, muted, videoPaused, soundHint, soundBlocked, reduced, finish, replay, toggleSound, toggleVideo };
+  return { video, mode, siteVisible, hasVideo, liveMounted, portrait, source, muted, videoPaused, soundHint, soundBlocked, playBlocked, waiting, skipNudged, reduced, finish, replay, toggleSound, toggleVideo };
 }

@@ -23,11 +23,14 @@
 .opening-icon svg{width:19px;height:19px;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
 .opening-sound-wrap{position:relative}
 .opening-sound-hint{position:absolute;right:calc(100% + 12px);top:50%;transform:translateY(-50%);font-size:11px;letter-spacing:.12em;white-space:nowrap;color:#aeb9c9}
-.particle-hero[data-sound-blocked=true]{cursor:pointer}
+.particle-hero[data-sound-blocked=true],.particle-hero[data-play-blocked=true]{cursor:pointer}
 .particle-hero[data-sound-blocked=true] .opening-sound-hint{font-size:13px;letter-spacing:.08em;color:#e8edf3;animation:opening-sound-hint 2.6s ease-in-out infinite}
 @keyframes opening-sound-hint{50%{opacity:.5}}
 .opening-skip{display:flex;align-items:center;gap:12px;min-height:44px;margin-left:8px;padding:0 4px 0 12px;background:none;color:#d9e1eb;font-size:12px;letter-spacing:.06em}
-.opening-skip svg{width:17px;height:17px}.opening-skip:hover{color:#fff}
+.opening-skip svg{width:17px;height:17px;transition:transform .35s ease}.opening-skip:hover{color:#fff}
+.opening-skip[data-nudged=true]{color:#fff}.opening-skip[data-nudged=true] svg{transform:translateX(6px)}
+.opening-status{position:absolute;top:64%;left:20px;right:20px;z-index:9;margin:0;text-align:center;font-size:13px;letter-spacing:.12em;color:#aeb9c9;pointer-events:none;animation:opening-status-in .6s ease both}
+@keyframes opening-status-in{from{opacity:0}}
 .opening-replay{background:none;color:#a8b4c5;font-size:11px;min-height:44px;padding:0 8px;white-space:nowrap}.opening-replay:hover{color:#fff}
 .home-copy{position:absolute;top:32%;left:20px;right:20px;transform:translateY(-50%);text-align:center;pointer-events:none}
 .home-title{margin:0!important;font-weight:500;text-wrap:initial}

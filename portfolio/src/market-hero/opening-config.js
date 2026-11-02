@@ -3,6 +3,11 @@ export const OPENING = Object.freeze({
   duration: 26,
   warmAt: 23.8,
   siteAt: 24.1,
+  // How long the film may sit without a new frame: a hint after the first, and it gives way to
+  // the homepage after no data at all for the second, or thin data for the third.
+  waitHintAfter: 2500,
+  quietLimit: 12000,
+  stuckLimit: 30000,
   seenKey: 'jin.portfolio.opening.v1',
   soundKey: 'jin.portfolio.sound.v2',
   desktop: '/media/opening/market-desktop.mp4',

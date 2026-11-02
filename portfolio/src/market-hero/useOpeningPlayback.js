@@ -17,6 +17,8 @@ export default function useOpeningPlayback({ section, onTime }) {
   const [muted, setMuted] = useState(() => readPreference(OPENING.soundKey) === 'off');
   const [videoPaused, setVideoPaused] = useState(false);
   const [soundHint, setSoundHint] = useState(mode === 'opening');
+  // The browser refused audible autoplay, so the opening runs silent until the visitor acts.
+  const [soundBlocked, setSoundBlocked] = useState(false);
   const userPaused = useRef(false);
   const volumeFrame = useRef(0);
   const releaseTimer = useRef(0);
@@ -44,7 +46,7 @@ export default function useOpeningPlayback({ section, onTime }) {
     setLiveMounted(true);
     setMode('ready');
     setSiteVisible(true);
-    setSoundHint(false);
+    setSoundHint(false); setSoundBlocked(false);
     onTime(OPENING.duration, true);
     rampVolume(0, 220, () => { if (modeRef.current === 'ready') video.current?.pause(); });
     clearTimeout(releaseTimer.current);
@@ -61,7 +63,7 @@ export default function useOpeningPlayback({ section, onTime }) {
   const toggleSound = useCallback(() => {
     const media = video.current;
     if (!media || modeRef.current !== 'opening') return;
-    setSoundHint(false);
+    setSoundHint(false); setSoundBlocked(false);
     if (muted) {
       media.volume = 0; media.muted = false; setMuted(false);
       writePreference(OPENING.soundKey, 'on');
@@ -87,7 +89,7 @@ export default function useOpeningPlayback({ section, onTime }) {
     cancelAnimationFrame(volumeFrame.current);
     userPaused.current = false;
     modeRef.current = 'opening';
-    setHasVideo(true); setMode('opening'); setSiteVisible(false); setVideoPaused(false); setSoundHint(false);
+    setHasVideo(true); setMode('opening'); setSiteVisible(false); setVideoPaused(false); setSoundHint(false); setSoundBlocked(false);
     const media = video.current;
     if (media) {
       media.muted = readPreference(OPENING.soundKey) === 'off';
@@ -137,9 +139,12 @@ export default function useOpeningPlayback({ section, onTime }) {
       frame = hasFrameCallback ? media.requestVideoFrameCallback(tick) : requestAnimationFrame(tick);
     };
     const play = () => {
-      media.play().catch(() => {
-        if (!active) return;
-        // Some browsers reject remembered audible playback. Muted autoplay is the fallback.
+      media.play().catch(error => {
+        // A pause during the attempt (leaving the tab) says nothing about sound.
+        if (!active || error.name === 'AbortError') return;
+        // Browsers refuse audible autoplay on a first visit. Muted autoplay is the fallback,
+        // and sound comes on with the visitor's first click or key, unless they turned it off.
+        setSoundBlocked(!media.muted);
         media.muted = true; setMuted(true);
         media.play().catch(() => { if (active) finish('blocked'); });
       });
@@ -174,6 +179,23 @@ export default function useOpeningPlayback({ section, onTime }) {
   }, [mode, source, hasVideo, finish, onTime, section, toggleVideo]);
 
   useEffect(() => {
+    if (!soundBlocked) return;
+    const enable = event => {
+      // The opening's own controls act for themselves; Escape and Tab don't count as asking for sound.
+      if (event.target.closest?.('.opening-controls') || event.key === 'Escape' || event.key === 'Tab') return;
+      if (navigator.userActivation && !navigator.userActivation.isActive) return;
+      const media = video.current;
+      setSoundBlocked(false);
+      if (!media) return;
+      media.volume = 0; media.muted = false; setMuted(false);
+      rampVolume(1, 400);
+      if (media.paused && !userPaused.current) media.play().catch(() => {});
+    };
+    window.addEventListener('click', enable, true); window.addEventListener('keydown', enable, true);
+    return () => { window.removeEventListener('click', enable, true); window.removeEventListener('keydown', enable, true); };
+  }, [soundBlocked, rampVolume]);
+
+  useEffect(() => {
     if (!soundHint) return;
     const timer = setTimeout(() => setSoundHint(false), 5500);
     return () => clearTimeout(timer);
@@ -183,5 +205,5 @@ export default function useOpeningPlayback({ section, onTime }) {
     video.current?.pause();
   }, []);
 
-  return { video, mode, siteVisible, hasVideo, liveMounted, portrait, source, muted, videoPaused, soundHint, reduced, finish, replay, toggleSound, toggleVideo };
+  return { video, mode, siteVisible, hasVideo, liveMounted, portrait, source, muted, videoPaused, soundHint, soundBlocked, reduced, finish, replay, toggleSound, toggleVideo };
 }

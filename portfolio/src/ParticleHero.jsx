@@ -58,7 +58,7 @@ export default function ParticleHero() {
     window.__homeOpening = { replay: opening.replay, skip: () => opening.finish('skip'), getState: () => ({ mode: opening.mode, siteVisible: showSite, liveReady, muted: opening.muted, reduced: opening.reduced, hasVideo: opening.hasVideo, portrait: opening.portrait, currentTime: opening.video.current?.currentTime ?? 0 }) };
   }
 
-  return <section ref={section} className={`particle-hero${opening.portrait ? ' is-portrait' : ''}`} id="top" aria-labelledby="particle-title" data-mode={opening.mode} data-site-visible={showSite} data-reduced={opening.reduced}>
+  return <section ref={section} className={`particle-hero${opening.portrait ? ' is-portrait' : ''}`} id="top" aria-labelledby="particle-title" data-mode={opening.mode} data-site-visible={showSite} data-reduced={opening.reduced} data-sound-blocked={opening.soundBlocked}>
     <div className="particle-scene" aria-hidden="true">
       <img className="opening-poster" src={opening.portrait ? OPENING.portraitPoster : OPENING.poster} alt="" fetchPriority="high" />
       {opening.liveMounted && <div className={`opening-live${liveReady ? ' is-ready' : ''}`}>
@@ -75,7 +75,7 @@ export default function ParticleHero() {
 
     {!ready && <div className="opening-controls" role="group" aria-label="开场播放控制">
       <div className="opening-sound-wrap">
-        {opening.soundHint && <span className="opening-sound-hint" aria-hidden="true">配乐</span>}
+        {(opening.soundHint || opening.soundBlocked) && <span className="opening-sound-hint" aria-hidden="true">{opening.soundBlocked ? '点击屏幕，开启配乐' : '配乐'}</span>}
         <button type="button" className="opening-icon" onClick={opening.toggleSound} aria-label={opening.muted ? '开启声音' : '静音'} aria-pressed={!opening.muted} title={opening.muted ? '开启声音' : '静音'}><SoundIcon muted={opening.muted} /></button>
       </div>
       <button type="button" className="opening-icon" onClick={opening.toggleVideo} aria-label={opening.videoPaused ? '继续开场' : '暂停开场'} title={opening.videoPaused ? '继续开场' : '暂停开场'}><PlaybackIcon paused={opening.videoPaused} /></button>

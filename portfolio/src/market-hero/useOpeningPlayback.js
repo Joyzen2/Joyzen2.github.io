@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { OPENING, markOpeningSettled, readPreference, writePreference } from './opening-config.js';
+import { OPENING, markOpeningSettled, readPreference, readVisit, writePreference, writeVisit } from './opening-config.js';
 
 export default function useOpeningPlayback({ section, onTime }) {
   const video = useRef(null);
@@ -8,8 +8,12 @@ export default function useOpeningPlayback({ section, onTime }) {
   const [mode, setMode] = useState(() => {
     const deep = location.hash && location.hash !== '#top';
     const force = new URLSearchParams(location.search).get('intro') === '1';
-    return reduced || deep || (!force && readPreference(OPENING.seenKey) === '1') ? 'ready' : 'opening';
+    return reduced || deep || (!force && readVisit(OPENING.seenKey) === '1') ? 'ready' : 'opening';
   });
+  // A restored scroll position would read as the visitor scrolling past the film.
+  const [startsWithFilm] = useState(mode === 'opening');
+  if (startsWithFilm && 'scrollRestoration' in history) history.scrollRestoration = 'manual';
+  useEffect(() => { if (startsWithFilm) scrollTo(0, 0); }, [startsWithFilm]);
   const modeRef = useRef(mode); modeRef.current = mode;
   const [hasVideo, setHasVideo] = useState(mode === 'opening');
   const [siteVisible, setSiteVisible] = useState(mode === 'ready');
@@ -47,7 +51,7 @@ export default function useOpeningPlayback({ section, onTime }) {
   const finish = useCallback((reason = 'skip') => {
     if (modeRef.current !== 'opening') return;
     modeRef.current = 'ready';
-    if (['skip', 'ended', 'scroll', 'navigate'].includes(reason)) writePreference(OPENING.seenKey, '1');
+    if (['skip', 'ended', 'scroll', 'navigate'].includes(reason)) writeVisit(OPENING.seenKey, '1');
     if (reason === 'skip') requestAnimationFrame(() => section.current?.querySelector('.home-introduction a')?.focus({ preventScroll: true }));
     setLiveMounted(true);
     setMode('ready');

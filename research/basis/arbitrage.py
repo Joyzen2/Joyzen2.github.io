@@ -388,8 +388,13 @@ def analyse_variety(code: str, fut: pd.DataFrame, S: pd.Series, E: pd.Series, ra
          for s in F.columns if pd.notna(F.at[last, s]) and dte.at[last, s] > 0),
         key=lambda x: x["dte"])
 
-    weekly = carry["excess"].cumsum().resample("W-FRI").last().dropna()
-    curve_w = curve.resample("W-FRI").last().dropna()
+    def week_end(series: pd.Series) -> pd.Series:
+        """每周取该周实际最后一个交易日，日期标签不会落到还没发生的周五。"""
+        series = series.dropna()
+        return series.groupby(series.index.to_period("W-FRI")).tail(1)
+
+    weekly = week_end(carry["excess"].cumsum())
+    curve_w = week_end(curve)
     return {
         "start": dates[0].strftime("%Y-%m-%d"), "end": last.strftime("%Y-%m-%d"), "days": int(len(dates)),
         "monitor": {"dates": [d.strftime("%Y-%m-%d") for d in dates], "ann": monitor},
@@ -414,15 +419,16 @@ def etf_check(nav: pd.Series, index: pd.Series, tr: pd.Series | None, start: str
     dates = dates[dates >= start]
     r_e, r_i = nav[dates].pct_change().dropna(), index[dates].pct_change().dropna()
     beta = float(r_e.cov(r_i) / r_i.var())
-    years = (dates[-1] - dates[0]).days / 365.25
-    etf_ann = float((nav[dates[-1]] / nav[dates[0]]) ** (1 / years) - 1)
+    # ETF 年化与「差」用同一时间段：有全收益指数时取两者共同的区间
+    window = dates
+    if tr is not None and len(dates.intersection(tr.dropna().index)) > 250:
+        window = dates.intersection(tr.dropna().index)
+    years = (window[-1] - window[0]).days / 365.25
+    etf_ann = float((nav[window[-1]] / nav[window[0]]) ** (1 / years) - 1)
     tr_ann = gap = None
-    if tr is not None and len(tr.dropna()):
-        common = dates.intersection(tr.dropna().index)
-        if len(common) > 250:
-            y = (common[-1] - common[0]).days / 365.25
-            tr_ann = float((tr[common[-1]] / tr[common[0]]) ** (1 / y) - 1)
-            gap = float((nav[common[-1]] / nav[common[0]]) ** (1 / y) - 1) - tr_ann
+    if window is not dates:
+        tr_ann = float((tr[window[-1]] / tr[window[0]]) ** (1 / years) - 1)
+        gap = etf_ann - tr_ann
     return {"beta": r5(beta), "etf_ann": r5(etf_ann), "tr_ann": r5(tr_ann), "gap": r5(gap)}
 
 
@@ -436,8 +442,20 @@ def build(market: dict) -> dict:
         "varieties": [],
         "results": {},
     }
+    # 四个品种统一截到共同的最后一天：各数据源更新时间不同，否则快照里各品种会不同期
+    fut = market["futures"]
+    ends = []
+    for code in VARIETIES:
+        f = fut[fut["variety"] == code]
+        if f.empty:
+            continue
+        ends.append(min(f["date"].max(), market["index"][code].dropna().index.max(), market["etf"][code].dropna().index.max()))
+    end = min(ends)
+    print(f"  共同的最后一天：{end:%Y-%m-%d}", flush=True)
+    fut = fut[fut["date"] <= end]
+    out["end"] = end.strftime("%Y-%m-%d")
     for code, (name, index_code, etf_code, etf_name) in VARIETIES.items():
-        res = analyse_variety(code, market["futures"], market["index"][code], market["etf"][code], market["rate"])
+        res = analyse_variety(code, fut, market["index"][code][:end], market["etf"][code][:end], market["rate"])
         if res is None:
             continue
         check = etf_check(market["etf"][code], market["index"][code], market.get("tr_index", {}).get(code), res["start"])

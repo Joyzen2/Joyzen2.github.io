@@ -61,11 +61,20 @@ def rebalance(holdings: dict[str, float], cash: float, targets: dict[str, float]
             final[c] = cur
         else:
             free.append(c)
-    room = investable - sum(final.values())
-    free_target = sum(desired[c] for c in free)
-    scale = room / free_target if free_target > 0 else 0.0
-    for c in free:
-        final[c] = max(0.0, desired[c] * scale)
+    # 逐轮封顶：按比例放大后超过个股上限的定在上限，余下的再分给其他股票；都到上限后剩余留作现金
+    cap = nav * C.STOCK_CAP
+    while True:
+        room = investable - sum(final.values())
+        live = [c for c in free if c not in final]
+        free_target = sum(desired[c] for c in live)
+        scale = room / free_target if free_target > 0 else 0.0
+        over = [c for c in live if desired[c] * scale > cap]
+        if not over:
+            for c in live:
+                final[c] = max(0.0, desired[c] * scale)
+            break
+        for c in over:
+            final[c] = cap
 
     trades, new = [], dict(holdings)
     # 先卖

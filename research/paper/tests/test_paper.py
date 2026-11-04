@@ -52,7 +52,8 @@ def test_rebalance_rules():
     assert fee == pytest.approx(sum(t["amount"] for t in res["trades"] if t["side"] == "buy") * C.BUY_COST, rel=1e-6)
 
 
-def test_rebalance_costs_and_cash():
+def test_rebalance_costs_and_cash(monkeypatch):
+    monkeypatch.setattr(C, "STOCK_CAP", 1.0)               # 这里只检查费用和现金，单只全仓
     q = {"600000": Quote(10.0, 10.0, 1e6), "000001": Quote(20.0, 20.0, 1e6)}
     res = rebalance({"600000": 100000.0}, 0.0, {"000001": 1.0}, q, {})
     sell = [t for t in res["trades"] if t["side"] == "sell"][0]
@@ -204,3 +205,51 @@ def test_commit_replaces_same_day_rows(tmp_path):
     book.commit(dict(book.acct), day, {"trades.csv": [row]}, None)
     book.commit(dict(book.acct), day, {"trades.csv": [row]}, None)
     assert len(pd.read_csv(tmp_path / "trades.csv")) == 1
+
+
+def test_redistribution_respects_stock_cap():
+    """停牌股冻结的权重分给其余股票时，不能把它们推过个股上限。"""
+    codes = [f"{600000 + i}" for i in range(55)]
+    q = {c: Quote(10.0, 10.0, 1e6) for c in codes}
+    q["600000"] = Quote(None, 10.0, 0)                     # 停牌，持有不足目标
+    targets = {c: 0.0182 for c in codes}                    # 和约为 1
+    targets["600000"] = 1 - 0.0182 * 54
+    res = rebalance({"600000": 100.0}, float(C.CAPITAL), targets, q, {"600000": 10.0})
+    w = {c: s * 10.0 / res["nav_open"] for c, s in res["holdings"].items()}
+    assert max(w.values()) <= C.STOCK_CAP + 1e-9
+
+
+class LateIndex(FakeData):
+    """中证500 价格指数当天还没发布。"""
+    def index_close(self, symbol, start, end):
+        s = super().index_close(symbol, start, end)
+        return s[s.index < end]
+
+
+def test_first_signal_checks_freshness(tmp_path):
+    with pytest.raises(StaleData):
+        run_day(Book(tmp_path), LateIndex(), dt.date(2026, 11, 30), strategy="benchmark", dry_run=True)
+    assert not list((tmp_path / "signals").glob("*.json"))
+    assert not (tmp_path / "account.json").exists()
+
+
+def test_index_close_cache(tmp_path, monkeypatch):
+    from paper import data as D
+    monkeypatch.setattr(C, "CACHE", tmp_path)
+    calls = []
+
+    class StubAk:
+        def stock_zh_index_hist_csindex(self, symbol, start_date, end_date):
+            calls.append((start_date, end_date))
+            days = pd.bdate_range(start_date, end_date)
+            return pd.DataFrame({"日期": days, "收盘": np.arange(len(days), dtype=float) + 100, "开盘": 99.0})
+
+    d = object.__new__(D.AkshareData)
+    d.offline, d.ak, d._index, d._asked = False, StubAk(), {}, set()
+    a = d.index_close("H00905", dt.date(2026, 11, 2), dt.date(2026, 11, 4))
+    b = d.index_close("H00905", dt.date(2026, 11, 2), dt.date(2026, 11, 4))
+    assert len(calls) == 1 and list(a.index) == list(b.index) == [dt.date(2026, 11, d) for d in (2, 3, 4)]
+    d2 = object.__new__(D.AkshareData)                      # 第二天新开一次运行：只补取缺的日期
+    d2.offline, d2.ak, d2._index, d2._asked = False, StubAk(), {}, set()
+    c = d2.index_close("H00905", dt.date(2026, 11, 2), dt.date(2026, 11, 5))
+    assert calls[-1] == ("20261105", "20261105") and len(c) == 4

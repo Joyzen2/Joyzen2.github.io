@@ -53,6 +53,8 @@ class AkshareData:
 
     def __init__(self, offline: bool = False):
         self.offline = offline
+        self._index: dict[str, pd.Series] = {}
+        self._asked: set = set()
         import akshare as ak  # 延迟导入，测试时不需要
         self.ak = ak
 
@@ -76,15 +78,35 @@ class AkshareData:
         out.to_csv(path, index=False)
         return out
 
+    def _csindex(self, symbol: str, start: dt.date, end: dt.date) -> pd.DataFrame:
+        try:
+            return _retry(lambda: self.ak.stock_zh_index_hist_csindex(
+                symbol=symbol, start_date=f"{start:%Y%m%d}", end_date=f"{end:%Y%m%d}"), f"指数 {symbol}", tries=3)
+        except RuntimeError as exc:
+            raise RuntimeError(f"{exc}。如果是 JSONDecodeError 或 HTTP 403，多半是被中证官网限流，"
+                               "请过一段时间再跑，不要连续重试") from exc
+
     def index_close(self, symbol: str, start: dt.date, end: dt.date) -> pd.Series:
-        df = _retry(lambda: self.ak.stock_zh_index_hist_csindex(
-            symbol=symbol, start_date=f"{start:%Y%m%d}", end_date=f"{end:%Y%m%d}"), f"指数 {symbol}")
-        return pd.Series(pd.to_numeric(df["收盘"], errors="coerce").values,
-                         index=pd.to_datetime(df["日期"]).dt.date, name=symbol).dropna()
+        """中证官网指数收盘，按代码缓存在本机，只补取缺的日期；同一次运行里不重复请求（官网对高频请求会封）。"""
+        path = _cache(f"index/{symbol}.csv")
+        if symbol not in self._index:
+            self._index[symbol] = (pd.read_csv(path, parse_dates=["date"]).set_index("date")["close"]
+                                   if path.exists() else pd.Series(dtype="float64"))
+        have = self._index[symbol]
+        need_from = start if have.empty or have.index.min().date() > start else have.index.max().date() + dt.timedelta(days=1)
+        if not self.offline and need_from <= end and (symbol, end) not in self._asked:
+            self._asked.add((symbol, end))
+            df = self._csindex(symbol, need_from, end)
+            if df is not None and len(df):
+                got = pd.Series(pd.to_numeric(df["收盘"], errors="coerce").values, index=pd.to_datetime(df["日期"])).dropna()
+                have = pd.concat([have, got]).groupby(level=0).last().sort_index()
+                self._index[symbol] = have
+                have.rename("close").rename_axis("date").to_csv(path)
+        out = have[(have.index.date >= start) & (have.index.date <= end)]
+        return pd.Series(out.values, index=out.index.date, name=symbol)
 
     def index_open(self, symbol: str, day: dt.date) -> float:
-        df = _retry(lambda: self.ak.stock_zh_index_hist_csindex(
-            symbol=symbol, start_date=f"{day:%Y%m%d}", end_date=f"{day:%Y%m%d}"), f"指数 {symbol} 开盘")
+        df = self._csindex(symbol, day, day)
         return float(pd.to_numeric(df["开盘"], errors="coerce").iloc[-1])
 
     # ── 个股 ──

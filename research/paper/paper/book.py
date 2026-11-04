@@ -190,6 +190,9 @@ def run_day(book: Book, data, day: dt.date, strategy: str = "icir", force_signal
     # 4. 月末：出下一期信号（当晚提交，早于下一交易日开盘）
     signal = None
     if signal_day:
+        # 第一次信号时还没有持仓，前面的日线检查不会生效，这里单独确认当天已经收盘
+        if day not in data.index_close(C.INDEX, prev, day).index:
+            raise StaleData(f"中证500 的 {day} 收盘还没有发布，请稍后再跑")
         members = data.members(day)
         if strategy == "benchmark":
             # 占位信号：跳过没有复权因子的股票（日跑记不了账）

@@ -17,6 +17,7 @@ import argparse
 import csv
 import datetime as dt
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -84,6 +85,10 @@ def main() -> None:
                       force_signal=args.force_signal, dry_run=args.dry_run)
     except StaleData as exc:
         sys.exit(f"今天的账没有记：{exc}。没有写入任何文件，稍后重跑即可。")
+    except RuntimeError as exc:          # 取数失败（网络、限流）；加 PAPER_DEBUG=1 可看完整 traceback
+        if os.environ.get("PAPER_DEBUG"):
+            raise
+        sys.exit(f"今天的账没有记：{exc}。没有写入任何文件，网络恢复后重跑即可。")
     print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
     if not args.dry_run:
         export(C.STATE, C.SITE_JSON)

@@ -30,6 +30,7 @@ from panel import Panel
 RISK_HISTORY_DAYS = 800          # 504 日因子协方差窗口 + 最早一个月末暴露需要的 240 日
 FIN_START = "2022-12-31"         # 最早用到的报告期：SUE 要约 12 个季度，TTM 与同比再往前
 CALIB_MIN, CALIB_WIN, CALIB_RANGE = 12, 36, (0.8, 1.6)
+MIN_COVERAGE = 0.95              # 信号日当天有日线的成分股比例下限（停牌一般远少于 5%）
 IC_FILE = C.STATE / "ic_history.csv"
 TE_FILE = C.STATE / "te_log.csv"
 
@@ -92,6 +93,12 @@ def monthly_target(day: dt.date, data, holdings: dict[str, float], dry_run: bool
     members = data.members(day)
     codes = sorted(set(members["code"]) | set(holdings))
     pn = Panel(data, codes, day, RISK_HISTORY_DAYS)
+    # 当天的日线要基本发布齐才出信号：只发布了一部分时，用这一部分算出的信号是错的
+    px = pn.load("raw_close")
+    cover = float(px.loc[t].reindex(members["code"]).notna().mean()) if t in px.index else 0.0
+    if cover < MIN_COVERAGE:
+        from paper.book import StaleData
+        raise StaleData(f"当月成分股里只有 {cover:.0%} 有 {day} 的日线，低于 {MIN_COVERAGE:.0%}，行情可能还没发布齐")
     hist = ind_mod.history(data)
 
     ix = data.index_close("000985", pn.days[0].date(), day)

@@ -15,3 +15,7 @@ portfolio/src/vendor/
 
 # 期现套利脚本的原始行情缓存，只在本机
 research/basis/.cache/
+
+# 模拟实盘：原始行情缓存与试运行记录，只在本机
+research/paper/.cache/
+research/paper/state-dryrun/

@@ -60,7 +60,7 @@ export default function Arbitrage({ data }) {
       <div className="hero-evidence">
         <h2>四个品种，一条零线。</h2>
         <Segments label="选择期货品种" value={code} onChange={setCode} options={options} />
-        <LineChart key={code} dates={mon.dates} series={[{ name: `${code} 年化基差`, values: mon.values, color: 'var(--accent)' }]} label={`${meta[code].index}股指期货连续合约年化基差`} />
+        <LineChart key={code} zeroLine dates={mon.dates} series={[{ name: `${code} 年化基差`, values: mon.values, color: 'var(--accent)' }]} label={`${meta[code].index}股指期货连续合约年化基差`} />
         <Note>{res.start}—{res.end} · 连续合约取剩余天数大于 {a.roll_min_days} 天的最近合约 · 年化基差 =（期货收盘 / 指数收盘 − 1）× 365 / 剩余天数，未扣分红。</Note>
       </div>
     </div>
@@ -96,7 +96,7 @@ export default function Arbitrage({ data }) {
 
     <Section id="carry" title="一直持有，付出多少？" aside="多 ETF（含分红的总收益）、空连续期货，按日保持等名义本金。">
       <div className="control-row"><Segments label="选择期货品种" value={carryCode} onChange={setCarryCode} options={options} /><span>收益均按资金占用（ETF 全额加保证金）计</span></div>
-      <LineChart key={carryCode} dates={carryCurve.dates} series={[{ name: '相对现金的累计超额', values: carryCurve.values, color: 'var(--accent)' }]} label={`${carryCode} 期现组合相对现金的累计超额`} />
+      <LineChart key={carryCode} zeroLine dates={carryCurve.dates} series={[{ name: '相对现金的累计超额', values: carryCurve.values, color: 'var(--accent)' }]} label={`${carryCode} 期现组合相对现金的累计超额`} />
       <DataTable caption={`${carryCode} 期现组合逐年拆解，均为当年合计`} headers={['年份', '基差收敛', '跟踪与分红', '换月成本', '合计', '资金成本', '相对现金']} rows={carry.years.map(y => [y.year, signed(y.basis), signed(y.tracking), signed(y.cost), signed(y.net), signed(y.funding), signed(y.excess)])} />
       <div className="research-verdict">
         <h3>{cs.basis_ann < 0 ? '对中性策略，这是一笔持续的对冲成本。' : '基差收敛为这个组合贡献了正收益。'}</h3>
@@ -105,13 +105,13 @@ export default function Arbitrage({ data }) {
     </Section>
 
     <Section id="arbitrage" title="只在值得时开仓。" aside="正向套利：扣除成本、按资金占用年化后的基差高于同期 Shibor，才开仓。">
-      <DataTable caption="择机正向套利，T 日收盘出信号、T+1 日收盘成交" headers={['品种', '完成交易', '跑赢现金', '平均持有天数', '持仓时间占比', '平均开仓年化基差', '相对现金年化']} rows={codes.map(c => { const s = data.results[c].arb.summary; return [`${c} · ${meta[c].etf}`, s.trades, s.trades ? `${s.wins} / ${s.trades}` : '—', s.avg_days == null ? '—' : num(s.avg_days, 1), pct(s.in_position, 1), signed(s.avg_entry_ann), signed(s.excess_ann)]; })} />
+      <DataTable caption="择机正向套利，T 日收盘出信号、T+1 日收盘成交" headers={['品种', '完成交易', '跑赢现金', '平均持有天数', '持仓时间占比', '平均信号日年化基差', '平均成交日年化基差', '相对现金年化']} rows={codes.map(c => { const s = data.results[c].arb.summary; return [`${c} · ${meta[c].etf}`, s.trades, s.trades ? `${s.wins} / ${s.trades}` : '—', s.avg_days == null ? '—' : num(s.avg_days, 1), pct(s.in_position, 1), signed(s.avg_signal_ann), signed(s.avg_entry_ann), signed(s.excess_ann)]; })} />
       <div className="control-row arbitrage-control"><Segments label="选择期货品种" value={arbCode} onChange={setArbCode} options={options} /><span>持有到合约最后交易日；基差转负时次日提前平仓</span></div>
       {closed.length
-        ? <LineChart key={arbCode} dates={arbCurve.dates} series={[{ name: '相对现金的累计超额', values: arbCurve.values, color: 'var(--accent)' }]} label={`${arbCode} 择机正向套利相对现金的累计超额`} />
+        ? <LineChart key={arbCode} zeroLine dates={arbCurve.dates} series={[{ name: '相对现金的累计超额', values: arbCurve.values, color: 'var(--accent)' }]} label={`${arbCode} 择机正向套利相对现金的累计超额`} />
         : <p className="arbitrage-empty">样本期内，{meta[arbCode].index}没有一天的升水在扣除成本与资金占用后高于同期 Shibor，因此没有开仓。</p>}
-      {arb.trades.length > 0 && <details><summary>展开 {arbCode} 逐笔交易</summary><DataTable caption={`${arbCode} 逐笔交易，收益按资金占用计`} headers={['合约', '开仓', '平仓', '天数', '开仓年化基差', '基差收敛', '跟踪与分红', '成本', '资金成本', '相对现金']} rows={arb.trades.map(t => [`${t.symbol}${t.open ? '（持有中）' : ''}`, t.entry, t.exit, t.days, signed(t.entry_ann), signed(t.basis, 3), signed(t.tracking, 3), signed(t.cost, 3), signed(t.funding, 3), signed(t.excess, 3)])} /></details>}
-      <Note>每笔开仓时两腿名义本金相等，之后数量固定，不复投；年化 = 全部交易的超额之和 / 样本年数，空仓期间按持有现金计。</Note>
+      {arb.trades.length > 0 && <details><summary>展开 {arbCode} 逐笔交易</summary><DataTable caption={`${arbCode} 逐笔交易，收益按资金占用计`} headers={['合约', '开仓', '平仓', '天数', '信号日年化基差', '成交日年化基差', '基差收敛', '跟踪与分红', '成本', '资金成本', '相对现金']} rows={arb.trades.map(t => [`${t.symbol}${t.open ? '（持有中）' : ''}`, t.entry, t.exit, t.days, signed(t.signal_ann), signed(t.entry_ann), signed(t.basis, 3), signed(t.tracking, 3), signed(t.cost, 3), signed(t.funding, 3), signed(t.excess, 3)])} /></details>}
+      <Note>信号在 T 日收盘形成，T+1 日收盘才成交，两列之差就是这一天里基差的变化：成交日的年化基差可能明显低于信号日，甚至转为贴水。这是可执行性的一部分。每笔开仓时两腿名义本金相等，之后数量固定，不复投；年化 = 全部交易的超额之和 / 样本年数，空仓期间按持有现金计。</Note>
     </Section>
 
     <Section id="reverse" title="反向的机会，为什么不做？" aside={reverseMore ? '贴水超过一次往返成本的交易日，多于升水。' : '把升水与贴水的频率放在一起看。'}>

@@ -310,13 +310,14 @@ def analyse_variety(code: str, fut: pd.DataFrame, S: pd.Series, E: pd.Series, ra
     # 择机正向套利：T 日收盘出信号，T+1 日收盘成交；持有到合约最后交易日，或基差转负时提前平仓
     # 开仓时两腿名义本金相等，之后数量固定，所以整笔盈亏 = ETF 收益 − 期货收益（都相对开仓价）。
     trades = []
-    pos, pending, exit_next = None, None, False
+    pos, pending, exit_next, signal_ann = None, None, False, None
     for i, d in enumerate(dates):
         if pending and pos is None:
             c = pending
             pending = None
             if pd.notna(F.at[d, c]):
-                pos = {"symbol": c, "entry": d, "F0": F.at[d, c], "S0": S[d], "E0": E[d], "ann0": ann.at[d, c]}
+                pos = {"symbol": c, "entry": d, "F0": F.at[d, c], "S0": S[d], "E0": E[d], "ann0": ann.at[d, c],
+                       "signal_ann": signal_ann}
                 continue
         if pos is not None:
             c = pos["symbol"]
@@ -331,7 +332,7 @@ def analyse_variety(code: str, fut: pd.DataFrame, S: pd.Series, E: pd.Series, ra
                 net_cap = (re_ - rf - rt_cost) / cap
                 trades.append({
                     "symbol": c, "entry": pos["entry"].strftime("%Y-%m-%d"), "exit": d.strftime("%Y-%m-%d"),
-                    "days": int(days), "entry_ann": r5(pos["ann0"]),
+                    "days": int(days), "signal_ann": r5(pos["signal_ann"]), "entry_ann": r5(pos["ann0"]),
                     "basis": r5((rs - rf) / cap), "tracking": r5((re_ - rs) / cap), "cost": r5(-rt_cost / cap),
                     "net": r5(net_cap), "funding": r5(-funding), "excess": r5(net_cap - funding),
                     # 样本末尾仍在持有：按最后一天收盘估值，不算作已完成的交易
@@ -349,7 +350,8 @@ def analyse_variety(code: str, fut: pd.DataFrame, S: pd.Series, E: pd.Series, ra
             net_ann = ((basis.loc[d][ok] - rt_cost) / cap * 365 / row[ok])
             best = net_ann.idxmax()
             if net_ann[best] > r[d]:
-                pending = best
+                # 信号日的年化基差也记下：T+1 成交时基差可能已经收敛
+                pending, signal_ann = best, ann.at[d, best]
 
     closed = [t for t in trades if not t["open"]]
     in_pos_days = sum(t["days"] for t in trades)
@@ -363,6 +365,7 @@ def analyse_variety(code: str, fut: pd.DataFrame, S: pd.Series, E: pd.Series, ra
         "excess_ann": r5(sum(t["excess"] for t in trades) / span) if trades else 0.0,
         "net_ann": r5(sum(t["net"] for t in trades) / span) if trades else 0.0,
         "avg_entry_ann": r5(sum(t["entry_ann"] for t in closed) / len(closed)) if closed else None,
+        "avg_signal_ann": r5(sum(t["signal_ann"] for t in closed) / len(closed)) if closed else None,
     }
     # 画图用的累计曲线：每笔的超额按持有天数平摊，终点与逐笔加总一致
     curve = pd.Series(0.0, index=dates)
@@ -458,7 +461,9 @@ def build(market: dict) -> dict:
         res = analyse_variety(code, fut, market["index"][code][:end], market["etf"][code][:end], market["rate"])
         if res is None:
             continue
-        check = etf_check(market["etf"][code], market["index"][code], market.get("tr_index", {}).get(code), res["start"])
+        tr = market.get("tr_index", {}).get(code)
+        check = etf_check(market["etf"][code][:end], market["index"][code][:end],
+                          None if tr is None else tr[:end], res["start"])
         splits = [d for d in market.get("splits", {}).get(code, []) if d >= res["start"]]
         out["varieties"].append({"code": code, "index": name, "etf": etf_name, "etf_code": etf_code,
                                  "check": check, "splits": splits})

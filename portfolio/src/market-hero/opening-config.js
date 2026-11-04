@@ -8,7 +8,9 @@ export const OPENING = Object.freeze({
   waitHintAfter: 2500,
   quietLimit: 12000,
   stuckLimit: 30000,
-  seenKey: 'jin.portfolio.opening.v1',
+  // Kept per tab, so every new visit opens with the film, while moving around the site
+  // within one tab (or reloading it) doesn't replay it.
+  seenKey: 'jin.portfolio.opening.v2',
   soundKey: 'jin.portfolio.sound.v2',
   desktop: '/media/opening/market-desktop.mp4',
   portrait: '/media/opening/market-portrait.mp4',
@@ -17,6 +19,8 @@ export const OPENING = Object.freeze({
 });
 export function readPreference(key) { try { return localStorage.getItem(key); } catch { return null; } }
 export function writePreference(key, value) { try { localStorage.setItem(key, value); } catch { /* Private browsing still gets a usable homepage. */ } }
+export function readVisit(key) { try { return sessionStorage.getItem(key); } catch { return null; } }
+export function writeVisit(key, value) { try { sessionStorage.setItem(key, value); } catch { /* Without storage the film simply plays again. */ } }
 
 // Heavy sections below the fold wait for this, so the opening video gets the connection first.
 let settled = false;

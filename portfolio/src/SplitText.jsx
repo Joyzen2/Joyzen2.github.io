@@ -73,6 +73,8 @@ const SplitText = ({
   loop = false,
   loopDelay = 1.5,
   hoverEffect = 'none',
+  // Seconds between unprompted passes of the lift, as if a pointer crossed left to right. 0 is off.
+  sweep = 0,
   color,
   accentColor,
   onLetterAnimationComplete
@@ -160,6 +162,10 @@ const SplitText = ({
       const springs = [];
       const kicks = [];
       const pointer = { x: 0, y: 0, inside: false };
+      const ghost = { x: 0, y: 0, active: false };
+      let pass = null;
+      let nextPass = null;
+      let inView = false;
 
       const reveal = (initial, vars) => {
         const accent = liveRef.current.accentColor;
@@ -236,7 +242,9 @@ const SplitText = ({
         raf = 0;
         const dt = Math.min(0.032, Math.max(0.001, (now - last) / 1000));
         last = now;
-        const spots = liveRef.current.hoverEffect === 'lift' && pointer.inside && revealed ? centers : null;
+        // A real pointer always wins over the scheduled pass.
+        const lead = pointer.inside ? pointer : ghost.active ? ghost : null;
+        const spots = liveRef.current.hoverEffect === 'lift' && lead && revealed ? centers : null;
         const radius = em * 1.15;
         let moving = false;
         for (let k = kicks.length - 1; k >= 0; k--) {
@@ -250,8 +258,8 @@ const SplitText = ({
           const spot = spots?.[i];
           let target = 0;
           if (spot) {
-            const dx = (spot.x - pointer.x) / radius;
-            const dy = (spot.y - pointer.y) / (radius * 1.4);
+            const dx = (spot.x - lead.x) / radius;
+            const dy = (spot.y - lead.y) / (radius * 1.4);
             target = -lift * Math.exp(-(dx * dx + dy * dy) * 0.5);
           }
           spring.v += (STIFFNESS * (target - spring.y) - DAMPING * spring.v) * dt;
@@ -272,6 +280,47 @@ const SplitText = ({
         last = performance.now();
         raf = requestAnimationFrame(tick);
       };
+
+      const schedulePass = (wait = sweep) => {
+        nextPass?.kill();
+        nextPass = sweep > 0 ? gsap.delayedCall(wait, runPass) : null;
+      };
+
+      const runPass = () => {
+        nextPass = null;
+        // Off screen, under a real pointer, or not yet revealed: try again next time.
+        if (!inView || pointer.inside || !revealed || liveRef.current.hoverEffect !== 'lift') {
+          schedulePass();
+          return;
+        }
+        measure();
+        const box = el.getBoundingClientRect();
+        const reach = em * 1.4;
+        ghost.y = box.height / 2;
+        ghost.x = -reach;
+        ghost.active = true;
+        pass?.kill();
+        pass = gsap.to(ghost, {
+          x: box.width + reach,
+          duration: Math.max(1.1, box.width / (em * 7)),
+          ease: 'sine.inOut',
+          onUpdate: wake,
+          onComplete: () => {
+            ghost.active = false;
+            pass = null;
+            wake();
+            schedulePass();
+          }
+        });
+      };
+
+      const watcher =
+        sweep > 0
+          ? new IntersectionObserver(([entry]) => {
+              inView = entry.isIntersecting;
+            })
+          : null;
+      watcher?.observe(el);
 
       const locate = e => {
         const box = el.getBoundingClientRect();
@@ -347,6 +396,7 @@ const SplitText = ({
               busy = null;
               finish();
               queue();
+              schedulePass(Math.min(sweep, 1.2));
             }
           });
           busy = intro;
@@ -354,7 +404,10 @@ const SplitText = ({
         }
       });
       setReady(true);
-      if (revealed) queue();
+      if (revealed) {
+        queue();
+        schedulePass();
+      }
 
       el.addEventListener('pointerenter', onEnter);
       el.addEventListener('pointermove', onMove);
@@ -364,6 +417,9 @@ const SplitText = ({
       return () => {
         cancelAnimationFrame(raf);
         queued?.kill();
+        pass?.kill();
+        nextPass?.kill();
+        watcher?.disconnect();
         busy?.kill();
         el.removeEventListener('pointerenter', onEnter);
         el.removeEventListener('pointermove', onMove);
@@ -395,6 +451,7 @@ const SplitText = ({
         trigger,
         loop,
         loopDelay,
+        sweep,
         fontsLoaded,
         reduced
       ],

@@ -12,3 +12,6 @@ DESIGN.md
 
 # React Bits Pro 组件源码：授权条款不允许进公开仓库，只用来本机构建
 portfolio/src/vendor/
+
+# 期现套利脚本的原始行情缓存，只在本机
+research/basis/.cache/

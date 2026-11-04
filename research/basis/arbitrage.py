@@ -125,6 +125,11 @@ def _cffex_month(month: str, refresh: bool) -> pd.DataFrame:
     return df
 
 
+# 份额折算的识别阈值：ETF 未复权价当日涨跌与指数相差超过此值。2015 年以来四只 ETF 在非折算日的
+# 最大偏离约 7.6%，已知最小的一次折算（510500，2022-08-29，比例约 0.873）偏离约 12.9%。
+SPLIT_GAP = 0.10
+
+
 def etf_total_return(raw: pd.Series, hfq: pd.Series, index: pd.Series) -> tuple[pd.Series, list[str], list[float]]:
     """ETF 的总收益净值（含分红）。
 
@@ -136,11 +141,18 @@ def etf_total_return(raw: pd.Series, hfq: pd.Series, index: pd.Series) -> tuple[
     dates = raw.dropna().index.intersection(hfq.dropna().index).intersection(index.dropna().index)
     raw, hfq, index = raw[dates], hfq[dates], index[dates]
     idx_ret = index.pct_change()
-    split = (raw.pct_change() - idx_ret).abs() > 0.15
+    split = (raw.pct_change() - idx_ret).abs() > SPLIT_GAP
     segment = split.cumsum()
     d_raw, d_hfq = raw.diff(), hfq.diff()
-    moving = d_raw.abs() > 1e-9
-    k = (d_hfq / d_raw)[moving & ~split].groupby(segment).median()
+    moving = (d_raw.abs() > 1e-9) & ~split
+    slope = d_hfq / d_raw
+    k = slope[moving].groupby(segment).median()
+    # 防线：每年的倍数应与所在段一致；不一致多半是一次没识别出来的份额折算
+    yearly = slope[moving].groupby([segment[moving], slope[moving].index.year]).median()
+    for (seg, year), value in yearly.items():
+        if abs(value / k[seg] - 1) > 0.02:
+            print(f"  ！警告：{year} 年后复权/未复权倍数 {value:.4f}，与所在段的 {k[seg]:.4f} 不一致，"
+                  f"可能有未识别的份额折算，请检查", flush=True)
     ret = d_hfq / (segment.map(k) * raw.shift(1))
     ret[split] = idx_ret[split]
     nav = (1 + ret.fillna(0)).cumprod()
@@ -395,9 +407,9 @@ def analyse_variety(code: str, fut: pd.DataFrame, S: pd.Series, E: pd.Series, ra
     }
 
 
-def etf_check(nav: pd.Series, index: pd.Series, tr: pd.Series | None) -> dict:
-    """自检：ETF 日收益对价格指数的 beta 应接近 1；ETF 年化应略低于全收益指数（差约为费率）。"""
-    start = pd.Timestamp(START)
+def etf_check(nav: pd.Series, index: pd.Series, tr: pd.Series | None, start: str) -> dict:
+    """自检（与研究样本同一区间）：ETF 日收益对价格指数的 beta 应接近 1；ETF 年化应接近全收益指数，略低的部分约为费率。"""
+    start = pd.Timestamp(start)
     dates = nav.index.intersection(index.index)
     dates = dates[dates >= start]
     r_e, r_i = nav[dates].pct_change().dropna(), index[dates].pct_change().dropna()
@@ -428,7 +440,7 @@ def build(market: dict) -> dict:
         res = analyse_variety(code, market["futures"], market["index"][code], market["etf"][code], market["rate"])
         if res is None:
             continue
-        check = etf_check(market["etf"][code], market["index"][code], market.get("tr_index", {}).get(code))
+        check = etf_check(market["etf"][code], market["index"][code], market.get("tr_index", {}).get(code), res["start"])
         splits = [d for d in market.get("splits", {}).get(code, []) if d >= res["start"]]
         out["varieties"].append({"code": code, "index": name, "etf": etf_name, "etf_code": etf_code,
                                  "check": check, "splits": splits})

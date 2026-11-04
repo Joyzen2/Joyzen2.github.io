@@ -44,6 +44,9 @@ export default function Arbitrage({ data }) {
   const arb = data.results[arbCode].arb;
   const arbCurve = points(arb.curve.dates, arb.curve.excess);
   const closed = arb.trades.filter(t => !t.open);
+  const splitList = data.varieties.flatMap(v => (v.splits || []).map(d => `${v.etf} ${d}`));
+  const splitText = splitList.length ? `（样本内：${splitList.join('、')}）` : '';
+  const checkText = data.varieties.filter(v => v.check).map(v => `${v.etf}日收益对指数的 beta 为 ${num(v.check.beta)}${v.check.gap == null ? '' : `，年化较全收益指数 ${signed(v.check.gap)}`}`).join('；');
   const share = key => codes.reduce((sum, c) => sum + (data.results[c].distribution[key] ?? 0), 0);
   const reverseMore = share('reverse_share') > share('forward_share');
 
@@ -91,7 +94,7 @@ export default function Arbitrage({ data }) {
       </div>
     </Section>
 
-    <Section id="carry" title="一直持有，付出多少？" aside="多 ETF（后复权）、空连续期货，按日保持等名义本金。">
+    <Section id="carry" title="一直持有，付出多少？" aside="多 ETF（含分红的总收益）、空连续期货，按日保持等名义本金。">
       <div className="control-row"><Segments label="选择期货品种" value={carryCode} onChange={setCarryCode} options={options} /><span>收益均按资金占用（ETF 全额加保证金）计</span></div>
       <LineChart key={carryCode} dates={carryCurve.dates} series={[{ name: '相对现金的累计超额', values: carryCurve.values, color: 'var(--accent)' }]} label={`${carryCode} 期现组合相对现金的累计超额`} />
       <DataTable caption={`${carryCode} 期现组合逐年拆解，均为当年合计`} headers={['年份', '基差收敛', '跟踪与分红', '换月成本', '合计', '资金成本', '相对现金']} rows={carry.years.map(y => [y.year, signed(y.basis), signed(y.tracking), signed(y.cost), signed(y.net), signed(y.funding), signed(y.excess)])} />
@@ -125,8 +128,9 @@ export default function Arbitrage({ data }) {
     </Section>
 
     <Sources files={[['arbitrage.json', '下载研究快照 JSON']]} manifest={false} statement={`本页结果由仓库中的脚本 research/basis/arbitrage.py 从公开数据重新计算，快照日期 ${data.generated}。均为历史回测，不构成投资建议。`}>
-      <p>数据：中金所每日行情（逐合约收盘价），新浪财经指数日线，东方财富 ETF 日线（后复权，含分红）与 Shibor 3 个月利率。原始行情只在本机缓存，仓库中只保存聚合结果。</p>
-      <p>未模拟整数手、逐日追加保证金与期货公司加收手续费；ETF 按二级市场收盘价成交，未考虑与净值的折溢价。期货在最后交易日按收盘价平仓，近似交割结算价（标的指数最后两小时的算术平均价）。开仓信号只用原始基差、不预估分红，对高股息品种偏保守；分红通过后复权 ETF 计入实际收益。</p>
+      <p>数据：中金所每日行情（逐合约收盘价），新浪财经指数日线，东方财富 ETF 日线（未复权与后复权）与 Shibor 3 个月利率；中证指数官网的全收益指数只用于自检。原始行情只在本机缓存，仓库中只保存聚合结果。</p>
+      <p>ETF 收益含分红。东方财富的后复权价是在未复权价上累加分红，不是按比例复权，直接相除会压低涨跌幅；这里以份额折算日为界分段，用后复权的日变动除以前一日未复权价（乘以该段的尺度倍数）得到总收益，份额折算当天以指数收益代替{splitText}。自检：{checkText}。</p>
+      <p>未模拟整数手、逐日追加保证金与期货公司加收手续费；ETF 按二级市场收盘价成交，未考虑与净值的折溢价。期货在最后交易日按收盘价平仓，近似交割结算价（标的指数最后两小时的算术平均价）。开仓信号只用原始基差、不预估分红，对高股息品种偏保守；分红通过 ETF 的总收益计入实际收益。</p>
     </Sources>
   </>;
 }

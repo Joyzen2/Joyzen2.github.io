@@ -9,7 +9,8 @@
     uv run research/basis/arbitrage.py --offline  # 只用本机缓存重算
 
 数据全部来自公开来源：中金所每日行情（逐合约收盘价），新浪的指数日线，东方财富的
-ETF 日线（后复权，含分红）与 Shibor 3 个月利率。原始行情只缓存在本机
+ETF 日线（未复权与后复权，用来算含分红的总收益）与 Shibor 3 个月利率；中证指数官网的
+全收益指数只用来自检。原始行情只缓存在本机
 research/basis/.cache/，不进仓库；仓库里只放 portfolio/public/research-data/arbitrage.json
 里的聚合结果。
 """
@@ -114,11 +115,36 @@ def _cffex_month(month: str, refresh: bool) -> pd.DataFrame:
                         pass
                 time.sleep(0.3)
             day += dt.timedelta(days=1)
-    df = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(
-        columns=["symbol", "volume", "open_interest", "close", "settle", "date", "variety"])
+    if not frames:
+        # 取不到就不写缓存，下次运行会重新尝试，而不是把这个月永远记成空的
+        print(f"  ！期货 {month} 没有取到数据，本次跳过", flush=True)
+        return pd.DataFrame(columns=["symbol", "volume", "open_interest", "close", "settle", "date", "variety"])
+    df = pd.concat(frames, ignore_index=True)
     path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(path, index=False)
     return df
+
+
+def etf_total_return(raw: pd.Series, hfq: pd.Series, index: pd.Series) -> tuple[pd.Series, list[str], list[float]]:
+    """ETF 的总收益净值（含分红）。
+
+    东方财富的后复权不是比例复权：在两次份额折算之间，后复权价 = k × 未复权价 + 累计分红
+    （k 在折算前为 1），所以直接用后复权价相除会把涨跌幅压低。这里以份额折算日为界分段，
+    每段用「后复权日变动 / 未复权日变动」的中位数估计 k，当日总收益 = 后复权日变动 / (k × 前一日未复权价)。
+    除息日也成立：后复权当天多出的部分正好是 k × 每份分红。折算当天两者尺度不连续，用指数当日收益代替。
+    """
+    dates = raw.dropna().index.intersection(hfq.dropna().index).intersection(index.dropna().index)
+    raw, hfq, index = raw[dates], hfq[dates], index[dates]
+    idx_ret = index.pct_change()
+    split = (raw.pct_change() - idx_ret).abs() > 0.15
+    segment = split.cumsum()
+    d_raw, d_hfq = raw.diff(), hfq.diff()
+    moving = d_raw.abs() > 1e-9
+    k = (d_hfq / d_raw)[moving & ~split].groupby(segment).median()
+    ret = d_hfq / (segment.map(k) * raw.shift(1))
+    ret[split] = idx_ret[split]
+    nav = (1 + ret.fillna(0)).cumprod()
+    return nav, [d.strftime("%Y-%m-%d") for d in dates[split]], [round(float(x), 4) for x in k]
 
 
 def fetch_market(offline: bool) -> dict:
@@ -153,20 +179,32 @@ def fetch_market(offline: bool) -> dict:
         time.sleep(0.5)
         return df
 
-    index, etf = {}, {}
+    index, etf, splits, tr_index = {}, {}, {}, {}
     for code, (_, index_code, etf_code, _) in VARIETIES.items():
         idx = cached(f"index_{index_code}", lambda c=index_code: ak.stock_zh_index_daily(symbol=c))
         index[code] = pd.Series(idx["close"].values, index=pd.to_datetime(idx["date"]), name=code).sort_index()
-        e = cached(f"etf_{etf_code}_hfq", lambda c=etf_code: ak.fund_etf_hist_em(
-            symbol=c, period="daily", start_date="20150101", end_date=today.strftime("%Y%m%d"), adjust="hfq"))
-        etf[code] = pd.Series(e["收盘"].values, index=pd.to_datetime(e["日期"]), name=code).sort_index()
+        prices = {}
+        for adjust in ("hfq", ""):
+            e = cached(f"etf_{etf_code}_{adjust or 'raw'}", lambda c=etf_code, a=adjust: ak.fund_etf_hist_em(
+                symbol=c, period="daily", start_date="20150101", end_date=today.strftime("%Y%m%d"), adjust=a))
+            prices[adjust] = pd.Series(e["收盘"].values, index=pd.to_datetime(e["日期"]), name=code).sort_index()
+        etf[code], splits[code], scale = etf_total_return(prices[""], prices["hfq"], index[code])
+        print(f"  {code} ETF 份额折算日 {splits[code] or '无'}，各段后复权/未复权倍数 {scale}", flush=True)
+        # 全收益指数只用来自检，取不到不影响结果
+        try:
+            tr = cached(f"tr_index_H{index_code[-5:]}", lambda c=index_code: ak.stock_zh_index_hist_csindex(
+                symbol=f"H{c[-5:]}", start_date="20150101", end_date=today.strftime("%Y%m%d")))
+            tr_index[code] = pd.Series(pd.to_numeric(tr["收盘"], errors="coerce").values,
+                                       index=pd.to_datetime(tr["日期"]), name=code).sort_index()
+        except Exception as exc:
+            print(f"  （{code} 全收益指数未取到，跳过自检：{type(exc).__name__}）", flush=True)
         print(f"  {code} 指数与 ETF", flush=True)
 
     rate = cached("shibor_3m", lambda: ak.rate_interbank(
         market="上海银行同业拆借市场", symbol="Shibor人民币", indicator="3月"))
     rate = pd.Series(pd.to_numeric(rate["利率"], errors="coerce").values / 100,
                      index=pd.to_datetime(rate["报告日"]), name="rate").sort_index()
-    return {"futures": futures, "index": index, "etf": etf, "rate": rate}
+    return {"futures": futures, "index": index, "etf": etf, "rate": rate, "splits": splits, "tr_index": tr_index}
 
 
 # ───────────────────────────── 计算 ─────────────────────────────
@@ -357,13 +395,32 @@ def analyse_variety(code: str, fut: pd.DataFrame, S: pd.Series, E: pd.Series, ra
     }
 
 
+def etf_check(nav: pd.Series, index: pd.Series, tr: pd.Series | None) -> dict:
+    """自检：ETF 日收益对价格指数的 beta 应接近 1；ETF 年化应略低于全收益指数（差约为费率）。"""
+    start = pd.Timestamp(START)
+    dates = nav.index.intersection(index.index)
+    dates = dates[dates >= start]
+    r_e, r_i = nav[dates].pct_change().dropna(), index[dates].pct_change().dropna()
+    beta = float(r_e.cov(r_i) / r_i.var())
+    years = (dates[-1] - dates[0]).days / 365.25
+    etf_ann = float((nav[dates[-1]] / nav[dates[0]]) ** (1 / years) - 1)
+    tr_ann = gap = None
+    if tr is not None and len(tr.dropna()):
+        common = dates.intersection(tr.dropna().index)
+        if len(common) > 250:
+            y = (common[-1] - common[0]).days / 365.25
+            tr_ann = float((tr[common[-1]] / tr[common[0]]) ** (1 / y) - 1)
+            gap = float((nav[common[-1]] / nav[common[0]]) ** (1 / y) - 1) - tr_ann
+    return {"beta": r5(beta), "etf_ann": r5(etf_ann), "tr_ann": r5(tr_ann), "gap": r5(gap)}
+
+
 def build(market: dict) -> dict:
     out = {
         "generated": dt.date.today().isoformat(),
         "assumptions": ASSUMPTIONS,
         "round_trip_cost": r5(2 * (ASSUMPTIONS["etf_commission"] + ASSUMPTIONS["etf_slippage"])
                               + 2 * (ASSUMPTIONS["fut_fee"] + ASSUMPTIONS["fut_slippage"])),
-        "sources": ["中金所每日行情", "新浪财经指数日线", "东方财富 ETF 日线（后复权）", "东方财富 Shibor 3 个月"],
+        "sources": ["中金所每日行情", "新浪财经指数日线", "东方财富 ETF 日线（未复权与后复权）", "东方财富 Shibor 3 个月"],
         "varieties": [],
         "results": {},
     }
@@ -371,7 +428,12 @@ def build(market: dict) -> dict:
         res = analyse_variety(code, market["futures"], market["index"][code], market["etf"][code], market["rate"])
         if res is None:
             continue
-        out["varieties"].append({"code": code, "index": name, "etf": etf_name, "etf_code": etf_code})
+        check = etf_check(market["etf"][code], market["index"][code], market.get("tr_index", {}).get(code))
+        splits = [d for d in market.get("splits", {}).get(code, []) if d >= res["start"]]
+        out["varieties"].append({"code": code, "index": name, "etf": etf_name, "etf_code": etf_code,
+                                 "check": check, "splits": splits})
+        print(f"  {code} 自检：ETF 对指数 beta {check['beta']}，ETF 年化 {check['etf_ann']}，"
+              f"全收益指数年化 {check['tr_ann']}，差 {check['gap']}；样本内份额折算日 {splits or '无'}")
         out["results"][code] = res
         s = res["arb"]["summary"]
         print(f"  {code}: {res['start']}—{res['end']}，择机套利 {s['trades']} 笔，"

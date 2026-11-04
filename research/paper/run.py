@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["akshare>=1.17", "pandas>=2.2", "requests>=2.31"]
+# dependencies = ["akshare>=1.17", "pandas>=2.2", "requests>=2.31", "cvxpy>=1.5", "clarabel>=0.9"]
 # ///
 """中证500 指数增强模拟实盘：每个交易日收盘后运行一次。
 
@@ -23,7 +23,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from paper import config as C  # noqa: E402
-from paper.book import Book, run_day  # noqa: E402
+from paper.book import Book, StaleData, run_day  # noqa: E402
 
 
 def _read_csv(path: Path) -> list[dict]:
@@ -79,8 +79,11 @@ def main() -> None:
     from paper.data import AkshareData
     state = C.ROOT / "state-dryrun" if args.dry_run else C.STATE
     day = dt.date.fromisoformat(args.date) if args.date else dt.date.today()
-    res = run_day(Book(state), AkshareData(offline=args.offline), day, strategy=args.signal,
-                  force_signal=args.force_signal, dry_run=args.dry_run)
+    try:
+        res = run_day(Book(state), AkshareData(offline=args.offline), day, strategy=args.signal,
+                      force_signal=args.force_signal, dry_run=args.dry_run)
+    except StaleData as exc:
+        sys.exit(f"今天的账没有记：{exc}。没有写入任何文件，稍后重跑即可。")
     print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
     if not args.dry_run:
         export(C.STATE, C.SITE_JSON)

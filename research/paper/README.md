@@ -10,7 +10,7 @@ uv run research/paper/run.py daily
 
 ## 规则
 
-- 信号：月频 ICIR 合成，37 个因子（方法见 `enhance/README.md`）。
+- 信号：月频 ICIR 合成，37 个因子，沿用中证500 研究的因子、预处理、风险模型与优化器（`enhance/`）。移植后的 37 个因子与原研究冻结的因子表逐月比对，等级相关中位数 1.000、最低 0.985。
 - 成交：信号日 T 收盘出信号，T+1 开盘成交。停牌冻结；开盘封涨停只能减不能加，封跌停只能加不能减；被冻结的权重先占住，其余按目标比例重新分配。主板、创业板 100 股一手，科创板至少 200 股。
 - 成本：买卖各 0.10%（含佣金与滑点），卖出另加印花税 0.05%。
 - 估值：复权价 = 东方财富不复权价 × 新浪后复权因子；除权除息日按复权因子同步股数，现金分红视为再投资。
@@ -29,8 +29,16 @@ uv run research/paper/run.py daily --dry-run --signal benchmark --force-signal
 
 试运行写入 `state-dryrun/`，不进仓库，不影响正式记录。
 
+一天的账要么完整记下，要么什么都不写：当天的个股日线、H00905 收盘、中金所行情任一项还没发布，都会报错退出，不写任何文件，稍后重跑即可。
+
+## 回测
+
+`backtest/` 下是用同样约束、在原研究的冻结行情库上重跑的月频 ICIR 回测（2013-01 至 2026-07 的信号，持有到 2026-09-01），
+`icir_monthly.csv` 为财报首次披露日口径，`icir_monthly_conservative.csv` 为保守口径（以东财 UPDATE_DATE 为可用日）。
+回测没有模拟整手和现金留存。它和模拟实盘分开展示，不拼接。
+
 ## 测试
 
 ```bash
-uv run --with pytest --with pandas pytest research/paper/tests -q
+uv run --with pytest --with pandas --with cvxpy --with clarabel pytest research/paper/tests -q
 ```

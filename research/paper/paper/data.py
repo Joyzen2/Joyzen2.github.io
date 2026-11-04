@@ -30,7 +30,7 @@ def _retry(fn, what: str, tries: int = 4):
 
 @contextmanager
 def _direct():
-    """申万官网走本机代理时证书校验失败，这类请求临时去掉代理直连。"""
+    """临时去掉代理直连。申万官网的问题其实是只发叶子证书、证书链不完整，直连也不一定成功，取不到时沿用本机副本。"""
     saved = {k: os.environ.pop(k) for k in list(os.environ) if k.lower() in ("http_proxy", "https_proxy", "all_proxy")}
     try:
         yield
@@ -92,8 +92,10 @@ class AkshareData:
         """不复权日线，按股票增量缓存。列：date open high low close volume amount turnover。"""
         path = _cache(f"bars/{code}.csv")
         old = pd.read_csv(path, parse_dates=["date"]) if path.exists() else pd.DataFrame()
-        if not self.offline:
-            since = start if old.empty else max(start, (old["date"].max() - pd.Timedelta(days=10)).date())
+        short = old.empty or old["date"].min().date() > start + dt.timedelta(days=10)
+        covered = not short and old["date"].max().date() >= end
+        if not self.offline and not covered:
+            since = start if short else max(start, (old["date"].max() - pd.Timedelta(days=10)).date())
             df = _retry(lambda: self.ak.stock_zh_a_hist(symbol=code, period="daily", start_date=f"{since:%Y%m%d}",
                                                         end_date=f"{end:%Y%m%d}", adjust=""), f"{code} 日线")
             if df is not None and len(df):
@@ -110,12 +112,61 @@ class AkshareData:
     def hfq_factor(self, code: str, refresh: bool = True) -> pd.Series:
         """新浪后复权因子（只在除权除息日变化），按日期升序。"""
         path = _cache(f"factors/{code}.csv")
-        if refresh and not self.offline:
+        fresh = path.exists() and dt.date.fromtimestamp(path.stat().st_mtime) == dt.date.today()
+        if refresh and not self.offline and not fresh:
             df = _retry(lambda: self.ak.stock_zh_a_daily(symbol=sina_symbol(code), adjust="hfq-factor"), f"{code} 复权因子")
             df.to_csv(path, index=False)
             time.sleep(0.3)
         df = pd.read_csv(path)
         return pd.Series(pd.to_numeric(df["hfq_factor"]).values, index=pd.to_datetime(df["date"]).dt.date).sort_index()
+
+    def value_history(self, code: str) -> pd.DataFrame:
+        """日频总市值、流通市值（元）、总股本（股），东财，2018 年起。信号日才用，当天只取一次。"""
+        path = _cache(f"value/{code}.csv")
+        fresh = path.exists() and dt.date.fromtimestamp(path.stat().st_mtime) == dt.date.today()
+        if not self.offline and not fresh:
+            df = _retry(lambda: self.ak.stock_value_em(symbol=code), f"{code} 估值")
+            out = pd.DataFrame({"date": pd.to_datetime(df["数据日期"]), "total_mcap": pd.to_numeric(df["总市值"], errors="coerce"),
+                                "float_mcap": pd.to_numeric(df["流通市值"], errors="coerce"),
+                                "total_shares": pd.to_numeric(df["总股本"], errors="coerce")})
+            out.to_csv(path, index=False)
+            time.sleep(0.3)
+        if not path.exists():
+            return pd.DataFrame()
+        return pd.read_csv(path, parse_dates=["date"]).set_index("date").sort_index()
+
+    def fin_period(self, report: str, period: str) -> pd.DataFrame:
+        """一个报告期的全市场财报（enhance/fetch.py 直接请求东财数据中心，带 NOTICE_DATE）。
+
+        最近四个报告期每天最多重取一次（财报陆续披露），更早的只取一次。
+        """
+        import fetch  # enhance/ 由 signal.icir_target 加入 sys.path
+        path = _cache(f"fin/{report}/{period}.csv")
+        recent = dt.date.fromisoformat(period) >= dt.date.today() - dt.timedelta(days=400)
+        stale = recent and path.exists() and dt.date.fromtimestamp(path.stat().st_mtime) != dt.date.today()
+        if not self.offline and (not path.exists() or stale):
+            if not hasattr(self, "_fin_session"):
+                self._fin_session, self._fin_throttle = fetch.session(), fetch.Throttle()
+            fetch.fetch_period(self._fin_session, self._fin_throttle, report, period).to_csv(path, index=False)
+        return pd.read_csv(path, dtype={"SECURITY_CODE": str})
+
+    def dividends(self, period: str) -> pd.DataFrame:
+        """一个报告期的分红方案（东财）：code、cash_per_10（每 10 股派现，元）、ex_date。period 形如 20251231。"""
+        path = _cache(f"dividends/{period}.csv")
+        recent = dt.datetime.strptime(period, "%Y%m%d").date() >= dt.date.today() - dt.timedelta(days=400)
+        stale = recent and path.exists() and dt.date.fromtimestamp(path.stat().st_mtime) != dt.date.today()
+        if not self.offline and (not path.exists() or stale):
+            try:
+                df = _retry(lambda: self.ak.stock_fhps_em(date=period), f"{period} 分红", tries=2)
+                out = pd.DataFrame({"code": df["代码"].astype(str).str.zfill(6),
+                                    "cash_per_10": pd.to_numeric(df["现金分红-现金分红比例"], errors="coerce"),
+                                    "ex_date": pd.to_datetime(df["除权除息日"], errors="coerce")})
+            except RuntimeError:              # 季报期经常没有分红方案，接口直接报错
+                out = pd.DataFrame(columns=["code", "cash_per_10", "ex_date"])
+            out.to_csv(path, index=False)
+        if not path.exists():
+            return pd.DataFrame({"code": pd.Series(dtype=str), "cash_per_10": pd.Series(dtype=float), "ex_date": pd.Series(dtype="datetime64[ns]")})
+        return pd.read_csv(path, dtype={"code": str}, parse_dates=["ex_date"])
 
     def st_codes(self) -> set[str]:
         df = _retry(self.ak.stock_zh_a_st_em, "ST 名单")
@@ -125,9 +176,16 @@ class AkshareData:
         """申万行业分类历史（对申万官网直连）。"""
         path = _cache("sw_industry.csv")
         if not self.offline or not path.exists():
-            with _direct():
-                df = _retry(self.ak.stock_industry_clf_hist_sw, "申万行业")
-            df.to_csv(path, index=False)
+            try:
+                with _direct():
+                    df = _retry(self.ak.stock_industry_clf_hist_sw, "申万行业", tries=2)
+                df.to_csv(path, index=False)
+            except RuntimeError as exc:
+                # 官网只发叶子证书，还时常返回 508，与是否走代理无关；分类变动很少，沿用上一次取到的副本
+                if not path.exists():
+                    raise
+                saved = dt.date.fromtimestamp(path.stat().st_mtime)
+                print(f"  申万行业取不到，沿用 {saved} 的本机副本（{type(exc.__cause__).__name__}）", flush=True)
         return pd.read_csv(path, dtype={"symbol": str, "industry_code": str})
 
     # ── 利率与期货 ──
@@ -141,9 +199,18 @@ class AkshareData:
         """当日 IC 各合约收盘价，取自中金所每日行情（复用期现套利脚本的解析）。"""
         import arbitrage as basis
         d = f"{day:%Y%m%d}"
-        r = basis._http_get(f"http://www.cffex.com.cn/sj/hqsj/rtj/{d[:6]}/{d[6:]}/{d}_1.csv")
-        if r is None or not r.ok or not r.content or b"<html" in r.content[:200].lower():
-            raise RuntimeError(f"中金所 {d} 行情尚未发布")
+        url = f"http://www.cffex.com.cn/sj/hqsj/rtj/{d[:6]}/{d[6:]}/{d}_1.csv"
+
+        def get():
+            r = basis._http_get(url)
+            if r is None or r.status_code >= 500:
+                raise ConnectionError(f"HTTP {getattr(r, 'status_code', '无响应')}")
+            return r
+
+        r = _retry(get, f"中金所 {d} 行情")      # 网络失败重试；下面才是真的还没发布
+        if r.status_code == 404 or not r.content or b"<html" in r.content[:200].lower():
+            from .book import StaleData
+            raise StaleData(f"中金所 {d} 的行情还没有发布，请稍后再跑")
         df = basis._parse_cffex_csv(r.content, d)
         df = df[df["variety"] == C.HEDGE_VARIETY].dropna(subset=["close"])
         return dict(zip(df["symbol"], df["close"].astype(float)))

@@ -21,7 +21,7 @@
 `research/paper/paper/signal.py` 会调用：
 
 ```python
-def monthly_target(day: datetime.date, data: AkshareData, holdings: dict[str, float]) -> pandas.DataFrame:
+def monthly_target(day: datetime.date, data: AkshareData, holdings: dict[str, float], dry_run: bool) -> pandas.DataFrame:
     """月末最后一个交易日收盘后，返回下一期的目标权重。"""
 ```
 

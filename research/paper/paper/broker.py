@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from . import config as C
-from .rules import buy_shares, limit_prices, sell_shares
+from .rules import board, buy_shares, limit_prices, sell_shares
 
 
 @dataclass
@@ -92,6 +92,7 @@ def rebalance(holdings: dict[str, float], cash: float, targets: dict[str, float]
         gap = final[c] / price[c] - held
         if gap > 0:
             orders[c] = gap
+    bought: dict[str, int] = {}
     need = sum(orders[c] * price[c] * (1 + C.BUY_COST) for c in orders)
     shrink = min(1.0, cash / need) if need > 0 else 1.0
     for c, gap in orders.items():
@@ -104,9 +105,34 @@ def rebalance(holdings: dict[str, float], cash: float, targets: dict[str, float]
             continue
         cash -= amount + fee
         new[c] = new.get(c, 0.0) + n
+        bought[c] = bought.get(c, 0) + n
+
+    # 补买：向下取整剩下的现金，按缺口从大到小逐只再买一手，直到现金降到 CASH_BUFFER 附近。
+    # 每只最多超过目标一手，且不超过个股上限。
+    floor = nav * C.CASH_BUFFER
+    while True:
+        gaps = sorted(((final[c] - new.get(c, 0.0) * price[c], c) for c in orders), reverse=True)
+        done = False
+        for gap, c in gaps:
+            lot = 200 if board(c) == "star" and new.get(c, 0.0) < 200 else 100
+            amount = lot * price[c]
+            fee = amount * C.BUY_COST
+            after = (new.get(c, 0.0) + lot) * price[c]
+            if gap <= 0 or after > final[c] + amount or after > nav * C.STOCK_CAP or cash - amount - fee < floor:
+                continue
+            cash -= amount + fee
+            new[c] = new.get(c, 0.0) + lot
+            bought[c] = bought.get(c, 0) + lot
+            done = True
+            break
+        if not done:
+            break
+    for c, n in bought.items():
+        amount = n * price[c]
         trades.append({"code": c, "side": "buy", "shares": n, "price": price[c],
-                       "amount": round(amount, 2), "fee": round(fee, 2), "status": status[c]})
+                       "amount": round(amount, 2), "fee": round(amount * C.BUY_COST, 2), "status": status[c]})
+    below_lot = sorted(c for c in orders if targets.get(c, 0) > 0 and new.get(c, 0.0) <= 0)
 
     new = {c: s for c, s in new.items() if s > 1e-9}
     blocked = {c: status[c] for c in codes if status[c] != "normal" and abs(desired[c] - value[c]) > 1}
-    return {"holdings": new, "cash": cash, "trades": trades, "nav_open": nav, "blocked": blocked}
+    return {"holdings": new, "cash": cash, "trades": trades, "nav_open": nav, "blocked": blocked, "below_lot": below_lot}

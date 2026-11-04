@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from paper import config as C  # noqa: E402
 from paper import hedge as H  # noqa: E402
-from paper.book import Book, is_signal_day, run_day  # noqa: E402
+from paper.book import Book, StaleData, is_signal_day, run_day  # noqa: E402
 from paper.broker import Quote, rebalance  # noqa: E402
 from paper.rules import buy_shares, limit_prices, sell_shares  # noqa: E402
 
@@ -155,7 +155,52 @@ def test_end_to_end(tmp_path):
     assert "skipped" in again
 
 
-def test_formal_signal_requires_bridge(tmp_path):
-    data = FakeData()
+def test_formal_signal_requires_bridge(tmp_path, monkeypatch):
+    monkeypatch.setattr(C, "ROOT", tmp_path)            # 没有 enhance/bridge.py 的目录
     with pytest.raises(SystemExit, match="ICIR 信号还没有接上"):
-        run_day(Book(tmp_path), data, dt.date(2026, 11, 30), strategy="icir")
+        run_day(Book(tmp_path / "state"), FakeData(), dt.date(2026, 11, 30), strategy="icir")
+
+
+def test_cash_drag_after_build():
+    """1000 万分到 80 只、股价 3 到 300 元：整手取整后补买，现金应接近 CASH_BUFFER。"""
+    rng = np.random.default_rng(3)
+    codes = [f"{600000 + i}" for i in range(60)] + [f"{688000 + i}" for i in range(20)]
+    prices = np.round(np.exp(rng.uniform(np.log(3), np.log(300), len(codes))), 2)
+    q = {c: Quote(float(p), float(p), 1e6) for c, p in zip(codes, prices)}
+    res = rebalance({}, float(C.CAPITAL), {c: 1 / len(codes) for c in codes}, q, {})
+    ratio = res["cash"] / C.CAPITAL
+    assert C.CASH_BUFFER * 0.9 <= ratio < 0.01, ratio
+    w = {t["code"]: t["amount"] / C.CAPITAL for t in res["trades"]}
+    assert max(w.values()) <= C.STOCK_CAP + 1e-9
+
+
+class LateBench(FakeData):
+    """H00905 当天还没发布。"""
+    def index_close(self, symbol, start, end):
+        s = super().index_close(symbol, start, end)
+        return s[s.index < end] if symbol == C.BENCHMARK else s
+
+
+def test_stale_data_writes_nothing_and_rerun_is_clean(tmp_path):
+    data = FakeData()
+    book = Book(tmp_path)
+    run_day(book, data, dt.date(2026, 11, 30), strategy="benchmark", dry_run=True)
+    late = LateBench()
+    with pytest.raises(StaleData):
+        run_day(Book(tmp_path), late, dt.date(2026, 12, 1), strategy="benchmark", dry_run=True)
+    assert not (tmp_path / "trades.csv").exists() and not (tmp_path / "nav.csv").exists()
+    assert json.loads((tmp_path / "account.json").read_text())["pending"] == "2026-11-30"
+    run_day(Book(tmp_path), data, dt.date(2026, 12, 1), strategy="benchmark", dry_run=True)
+    trades = pd.read_csv(tmp_path / "trades.csv")
+    assert len(trades) == len(trades.drop_duplicates(["date", "code", "side"]))
+
+
+def test_commit_replaces_same_day_rows(tmp_path):
+    """写到一半中断后重跑：同一天的旧行先删掉，不会重复。"""
+    book = Book(tmp_path)
+    day = dt.date(2026, 12, 1)
+    row = {"date": day.isoformat(), "signal": "2026-11-30", "code": "600000", "side": "buy", "shares": 100,
+           "price": 10, "amount": 1000, "fee": 1, "status": "normal"}
+    book.commit(dict(book.acct), day, {"trades.csv": [row]}, None)
+    book.commit(dict(book.acct), day, {"trades.csv": [row]}, None)
+    assert len(pd.read_csv(tmp_path / "trades.csv")) == 1

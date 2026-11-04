@@ -3,7 +3,7 @@
 正式信号是月频 ICIR 合成（37 个因子，沿用中证500 研究的因子、预处理、风险模型与优化器）。
 那部分代码从原研究项目移植到 research/paper/enhance/ 后，由 enhance/bridge.py 提供：
 
-    monthly_target(day: date, data: AkshareData, holdings: dict[str, float]) -> pandas.DataFrame
+    monthly_target(day: date, data: AkshareData, holdings: dict[str, float], dry_run: bool) -> pandas.DataFrame
         必须返回列 code、weight；可选 score、industry。权重和为 1，只做多。
 
 在移植完成之前，只能用 "benchmark" 占位信号做试运行：它按指数权重取前 TARGET_HOLDINGS 只并封顶，
@@ -34,14 +34,13 @@ def benchmark_target(members: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame({"code": w.index, "weight": w.values})
 
 
-def icir_target(day: dt.date, data, holdings: dict[str, float]) -> pd.DataFrame:
-    sys.path.insert(0, str(C.ROOT / "enhance"))
-    try:
-        from bridge import monthly_target  # noqa: PLC0415
-    except ImportError as exc:
+def icir_target(day: dt.date, data, holdings: dict[str, float], dry_run: bool = False) -> pd.DataFrame:
+    if not (C.ROOT / "enhance" / "bridge.py").exists():
         raise SystemExit("ICIR 信号还没有接上：请先把原研究项目的模块移植到 research/paper/enhance/，"
-                         "并在 enhance/bridge.py 里实现 monthly_target。试运行可用 --signal benchmark。") from exc
-    return monthly_target(day, data, holdings)
+                         "并在 enhance/bridge.py 里实现 monthly_target。试运行可用 --signal benchmark。")
+    sys.path.insert(0, str(C.ROOT / "enhance"))
+    from bridge import monthly_target  # noqa: PLC0415  缺依赖（cvxpy 等）时原样报错
+    return monthly_target(day, data, holdings, dry_run=dry_run)
 
 
 def validate(target: pd.DataFrame, members: pd.DataFrame, industry: dict[str, str] | None = None) -> list[str]:

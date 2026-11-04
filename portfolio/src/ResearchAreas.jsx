@@ -24,9 +24,10 @@ const AREAS = [
   {
     key: 'quant', en: 'QUANTITATIVE STRATEGY', title: '量化策略',
     statement: '从市场信息中提取信号，并以数据检验。',
-    scope: ['中证500', '因子研究', '回测', '风险管理'],
+    scope: ['中证500', '因子研究', '期现套利', '风险管理'],
     image: media('research/quant-lines.svg'), alt: '红绿 K 线的线稿，主题配图，非策略收益曲线',
     links: [
+      ['期现套利', 'ETF 与股指期货：基差、成本与可执行性', '/arbitrage/'],
       ['指数增强', '中证500多因子指数增强', '/csi500/'],
       ['文本因子', '大模型文本因子与前视偏差', '/text-factors/'],
     ],

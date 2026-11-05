@@ -163,6 +163,53 @@ def test_first_day_hedge_in_ledger(tmp_path):
     assert row["nav_hedged"] < row["nav_long"]                        # 市场涨，空头当天就亏
 
 
+def test_long_suspension_keeps_value(tmp_path):
+    """持仓停牌超过取数窗口（15 天）：按最后一个收盘价估值，不能算成 0。"""
+    data, book = FakeData(), Book(tmp_path)
+    days = [d for d in data.cal if dt.date(2026, 11, 30) <= d <= dt.date(2026, 12, 2)]
+    for d in days:
+        run_day(book, data, d, strategy="benchmark", dry_run=True)
+    halted = sorted(book.acct["holdings"])[-1]
+    stop = pd.Timestamp("2026-12-03")
+
+    class Halted(FakeData):
+        def bars(self, code, start, end):
+            b = super().bars(code, start, end)
+            return b[b["date"] < stop].reset_index(drop=True) if code == halted else b
+
+    data2 = Halted()
+    last = dt.date(2026, 12, 30)
+    for d in [d for d in data.cal if dt.date(2026, 12, 3) <= d <= last]:
+        res = run_day(book, data2, d, strategy="benchmark", dry_run=True)
+    want = sum(s * (float(data.px[c][dt.date(2026, 12, 2)]) if c == halted else float(data.px[c][last]))
+               for c, s in book.acct["holdings"].items())
+    assert res["nav"]["long_value"] == pytest.approx(want, abs=0.02)
+    assert any(halted in line for line in res["log"])
+
+
+def test_year_end_signal_when_calendar_stops_there():
+    cal = [dt.date(2026, 12, 30), dt.date(2026, 12, 31)]
+    assert is_signal_day(cal[1], cal) and not is_signal_day(cal[0], cal)
+
+
+def test_missed_day_refused(tmp_path):
+    """账本在走时跳过一个交易日：待执行的信号会晚一天成交，所以拒绝，提示先补哪一天。"""
+    data, book = FakeData(), Book(tmp_path)
+    run_day(book, data, dt.date(2026, 11, 30), strategy="benchmark", dry_run=True)
+    before = {p.name: p.read_bytes() for p in tmp_path.glob("*.*")}
+    with pytest.raises(StaleData, match="2026-12-01"):
+        run_day(Book(tmp_path), data, dt.date(2026, 12, 2), strategy="benchmark", dry_run=True)
+    assert {p.name: p.read_bytes() for p in tmp_path.glob("*.*")} == before
+    for d in (dt.date(2026, 12, 1), dt.date(2026, 12, 2)):
+        assert run_day(book, data, d, strategy="benchmark", dry_run=True)["day"] == d.isoformat()
+
+
+def test_day_past_the_calendar_is_stale(tmp_path):
+    data = FakeData()
+    with pytest.raises(StaleData, match="交易日历"):
+        run_day(Book(tmp_path), data, data.cal[-1] + dt.timedelta(days=3), strategy="benchmark", dry_run=True)
+
+
 def test_cffex_file_fetched_once(tmp_path, monkeypatch):
     from paper import data as D
     import arbitrage as basis

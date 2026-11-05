@@ -75,7 +75,7 @@ def _asof(series: pd.Series, day: dt.date):
 def is_signal_day(day: dt.date, cal: list[dt.date]) -> bool:
     """月末最后一个交易日。"""
     later = [d for d in cal if d > day]
-    return bool(later) and later[0].month != day.month
+    return not later or later[0].month != day.month       # 日历只到年底、明年的还没公布时，最后一天也是月末
 
 
 def run_day(book: Book, data, day: dt.date, strategy: str = "icir", force_signal: bool = False,
@@ -83,12 +83,19 @@ def run_day(book: Book, data, day: dt.date, strategy: str = "icir", force_signal
     if day >= clock.today() and not clock.closed(day):
         raise StaleData(f"{day} 还没有收盘结算（北京时间 {clock.SETTLED_AFTER:%H:%M} 之前），收盘后再跑")
     cal = data.calendar()
+    if day > cal[-1]:
+        raise StaleData(f"交易日历只到 {cal[-1]}，还没有 {day}，请稍后再跑")
     if day not in cal:
         return {"skipped": f"{day} 不是交易日"}
     if book.acct["last_day"] and dt.date.fromisoformat(book.acct["last_day"]) >= day:
         return {"skipped": f"{day} 已经记过账，不重复计算"}
     acct = copy.deepcopy(book.acct)
     prev = max(d for d in cal if d < day)
+    # 账本在走的时候不能跳过交易日：待执行的信号必须在下一交易日开盘成交，跳过就成了晚一天成交
+    if acct["last_day"] and (acct["started"] or acct.get("pending")):
+        missed = [d for d in cal if dt.date.fromisoformat(acct["last_day"]) < d < day]
+        if missed:
+            raise StaleData(f"账本只记到 {acct['last_day']}，{missed[0]} 还没记，请先按日期补：run.py daily --date {missed[0]}")
     log, rows = [], {"trades.csv": [], "nav.csv": [], "hedge.csv": []}
 
     signal_day = force_signal or (is_signal_day(day, cal) and day >= dt.date.fromisoformat(C.FIRST_SIGNAL))
@@ -98,6 +105,11 @@ def run_day(book: Book, data, day: dt.date, strategy: str = "icir", force_signal
 
     # ── 取数，并确认当天数据已经发布 ──
     bars = {c: data.bars(c, prev - dt.timedelta(days=15), day) for c in sorted(codes)}
+    for c in acct["holdings"]:
+        if bars[c] is None or bars[c].empty:      # 停牌超过取数窗口：往前多取，按最后一个收盘价估值
+            bars[c] = data.bars(c, prev - dt.timedelta(days=400), day)
+            if bars[c] is None or bars[c].empty:
+                raise RuntimeError(f"持仓 {c} 取不到日线，无法估值")
     if codes:
         latest = max((b["date"].max().date() for b in bars.values() if b is not None and not b.empty), default=None)
         if latest != day:

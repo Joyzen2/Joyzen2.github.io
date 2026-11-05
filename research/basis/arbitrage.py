@@ -7,6 +7,7 @@
 用法（在仓库根目录）：
     uv run research/basis/arbitrage.py            # 取数（有缓存）并计算，写出研究快照
     uv run research/basis/arbitrage.py --offline  # 只用本机缓存重算
+    期货、ETF 与指数的交易日对不上时不写快照；确认无害后加 --allow-gaps。
 
 数据全部来自公开来源：中金所每日行情（逐合约收盘价），新浪的指数日线，东方财富的
 ETF 日线（未复权与后复权，用来算含分红的总收益）与 Shibor 3 个月利率；中证指数官网的
@@ -88,11 +89,18 @@ def _parse_cffex_csv(raw: bytes, date: str) -> pd.DataFrame:
 
 
 def _cffex_month(month: str, refresh: bool) -> pd.DataFrame:
-    """一个月的逐合约日线。整月压缩包下载一次，按月缓存。"""
+    """一个月的逐合约日线。整月压缩包下载一次，按月缓存。
+
+    只有「月份已经过完、并且整月压缩包取到了」才写缓存。逐日取到的数据可能缺天（当月还没
+    过完，或者某天请求失败），写进缓存的话，这个月一旦不在每次重取的范围里，缺的那几天就
+    永远补不回来。
+    """
     path = CACHE / "cffex" / f"{month}.csv"
     if path.exists() and not refresh:
         return pd.read_csv(path, parse_dates=["date"])
-    frames = []
+    first = dt.date(int(month[:4]), int(month[4:]), 1)
+    month_over = (first.replace(day=28) + dt.timedelta(days=4)).replace(day=1) <= dt.date.today()
+    frames, complete = [], False
     r = _http_get(f"http://www.cffex.com.cn/sj/historysj/{month}/zip/{month}.zip")
     if r is not None and r.ok and r.content[:2] == b"PK":
         with zipfile.ZipFile(io.BytesIO(r.content)) as zf:
@@ -100,28 +108,40 @@ def _cffex_month(month: str, refresh: bool) -> pd.DataFrame:
                 m = re.search(r"(\d{8})_1\.csv$", name)
                 if m:
                     frames.append(_parse_cffex_csv(zf.read(name), m.group(1)))
+        complete = month_over and bool(frames)
     else:
         # 当月的压缩包可能还没发布，改为逐日取当日行情
-        first = dt.date(int(month[:4]), int(month[4:]), 1)
+        failed = []
         day = first
         while day.month == first.month and day <= dt.date.today():
             if day.weekday() < 5:
                 d = day.strftime("%Y%m%d")
                 rr = _http_get(f"http://www.cffex.com.cn/sj/hqsj/rtj/{d[:6]}/{d[6:]}/{d}_1.csv")
+                # 节假日也会取不到（返回网页），这里分不清，交给 build() 里和指数交易日的比对
                 if rr is not None and rr.ok and rr.content and b"<html" not in rr.content[:200].lower():
                     try:
                         frames.append(_parse_cffex_csv(rr.content, d))
-                    except Exception:
-                        pass
+                    except (ValueError, IndexError, pd.errors.ParserError) as exc:
+                        failed.append(f"{d}（{type(exc).__name__}）")
                 time.sleep(0.3)
             day += dt.timedelta(days=1)
+        if failed:
+            print(f"  ！期货 {month} 有几天的行情解析失败：{'、'.join(failed)}", flush=True)
     if not frames:
         # 取不到就不写缓存，下次运行会重新尝试，而不是把这个月永远记成空的
         print(f"  ！期货 {month} 没有取到数据，本次跳过", flush=True)
         return pd.DataFrame(columns=["symbol", "volume", "open_interest", "close", "settle", "date", "variety"])
     df = pd.concat(frames, ignore_index=True)
     path.parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(path, index=False)
+    partial = path.with_suffix(".partial.csv")
+    if complete:
+        df.to_csv(path, index=False)
+        partial.unlink(missing_ok=True)
+    else:
+        # 不完整的月份另存一份，只给 --offline 用；联网运行时不读它，下次照样重新取。
+        # 旧版本可能把不完整的月份写进过正式缓存，这里一并去掉。
+        df.to_csv(partial, index=False)
+        path.unlink(missing_ok=True)
     return df
 
 
@@ -175,18 +195,28 @@ def fetch_market(offline: bool) -> dict:
     for month in months:
         path = CACHE / "cffex" / f"{month}.csv"
         if offline:
-            if path.exists():
-                futures.append(pd.read_csv(path, parse_dates=["date"]))
+            # 缺的月份在这里跳过，build() 会拿指数的交易日比对，发现缺口就停下
+            for p in (path, path.with_suffix(".partial.csv")):
+                if p.exists():
+                    futures.append(pd.read_csv(p, parse_dates=["date"]))
+                    break
             continue
         futures.append(_cffex_month(month, refresh=month in recent))
         print(f"  期货 {month}", flush=True)
     futures = pd.concat(futures, ignore_index=True)
 
     def cached(name: str, loader):
+        """联网时重新取（这几份数据每次都要更新到最新）；取不到就退回本机缓存。"""
         path = CACHE / f"{name}.csv"
         if offline:
             return pd.read_csv(path)
-        df = loader()
+        try:
+            df = loader()
+        except Exception as exc:  # AkShare 背后的接口各不相同，抛出的异常类型没有统一
+            if not path.exists():
+                raise
+            print(f"  ！{name} 这次没有取到（{type(exc).__name__}），改用本机缓存", flush=True)
+            return pd.read_csv(path)
         df.to_csv(path, index=False)
         time.sleep(0.5)
         return df
@@ -435,7 +465,32 @@ def etf_check(nav: pd.Series, index: pd.Series, tr: pd.Series | None, start: str
     return {"beta": r5(beta), "etf_ann": r5(etf_ann), "tr_ann": r5(tr_ann), "gap": r5(gap)}
 
 
-def build(market: dict) -> dict:
+def find_gaps(market: dict, end: pd.Timestamp) -> list[str]:
+    """拿指数的交易日对照期货与 ETF：缺的日子会在计算里被悄悄跳过，合约到期日也会跟着错。"""
+    fut = market["futures"]
+    problems = []
+    for code in VARIETIES:
+        f = fut[fut["variety"] == code]
+        if f.empty:
+            continue
+        start = max(f["date"].min(), pd.Timestamp(START))
+        days = market["index"][code].dropna().index
+        days = days[(days >= start) & (days <= end)]
+        for label, have in (("期货", pd.DatetimeIndex(f["date"].unique())), ("ETF", market["etf"][code].dropna().index)):
+            missing = days.difference(have)
+            if len(missing):
+                shown = "、".join(d.strftime("%Y-%m-%d") for d in missing[:8])
+                more = f" 等 {len(missing)} 天" if len(missing) > 8 else ""
+                hint = ""
+                if label == "期货":
+                    months = sorted({d.strftime("%Y%m") for d in missing})
+                    where = CACHE.relative_to(ROOT) if CACHE.is_relative_to(ROOT) else CACHE
+                    hint = "；可删掉 " + "、".join(f"{where}/cffex/{m}.csv" for m in months) + " 后联网重跑"
+                problems.append(f"{code} {label}缺 {shown}{more}{hint}")
+    return problems
+
+
+def build(market: dict, allow_gaps: bool = False) -> dict:
     out = {
         "generated": dt.date.today().isoformat(),
         "assumptions": ASSUMPTIONS,
@@ -455,6 +510,11 @@ def build(market: dict) -> dict:
         ends.append(min(f["date"].max(), market["index"][code].dropna().index.max(), market["etf"][code].dropna().index.max()))
     end = min(ends)
     print(f"  共同的最后一天：{end:%Y-%m-%d}", flush=True)
+    gaps = find_gaps(market, end)
+    for line in gaps:
+        print(f"  ！{line}", flush=True)
+    if gaps and not allow_gaps:
+        raise SystemExit("行情有缺口，没有写出快照。确认缺口无害（比如某只 ETF 停牌）后可加 --allow-gaps 继续。")
     fut = fut[fut["date"] <= end]
     out["end"] = end.strftime("%Y-%m-%d")
     for code, (name, index_code, etf_code, etf_name) in VARIETIES.items():
@@ -479,11 +539,12 @@ def build(market: dict) -> dict:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--offline", action="store_true", help="只用本机缓存")
+    ap.add_argument("--allow-gaps", action="store_true", help="行情与指数交易日对不上时仍然写出快照")
     args = ap.parse_args()
     print("取数…")
     market = fetch_market(args.offline)
     print("计算…")
-    result = build(market)
+    result = build(market, allow_gaps=args.allow_gaps)
     OUT.write_text(json.dumps(result, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(f"写出 {OUT.relative_to(ROOT)}（{OUT.stat().st_size // 1024} KB）")
 

@@ -133,9 +133,28 @@ def subset_font(chars: str) -> None:
     print(f"标题字子集 {len(chars)} 个字符，{FONT_OUT.stat().st_size // 1024} KB")
 
 
+LOCAL_MARK = ".jz-local-preview"   # 本机预览目录里的记号：有它才允许整个清空重建
+
+
+def output_dir(local: str | None) -> pathlib.Path:
+    """输出目录。每次构建会先整个删掉它，所以本机预览目录只接受空目录或以前预览留下的目录。"""
+    if local is None:
+        return OUT
+    out = pathlib.Path(local).expanduser().resolve()
+    root, home = ROOT.resolve(), pathlib.Path.home().resolve()
+    if out in (root, OUT.resolve(), home, pathlib.Path(out.anchor)) or out in root.parents or out in home.parents:
+        sys.exit(f"--local 不能指向 {out}：构建会先清空这个目录。换一个专门的预览目录，比如 {ROOT / 'preview'}")
+    if out.exists() and (not out.is_dir() or (any(out.iterdir()) and not (out / LOCAL_MARK).exists())):
+        sys.exit(f"{out} 已经有别的文件，不是以前的预览目录；为免误删，请换一个空目录")
+    return out
+
+
 def main() -> None:
-    local = "--local" in sys.argv
-    out = pathlib.Path(sys.argv[sys.argv.index("--local") + 1]) if local else OUT
+    args = sys.argv[1:]
+    if "--local" in args and (args.index("--local") + 1 >= len(args) or args[args.index("--local") + 1].startswith("-")):
+        sys.exit("用法：uv run python build.py --local 预览目录")
+    local = args[args.index("--local") + 1] if "--local" in args else None
+    out = output_dir(local)
     template = (ROOT / "templates" / "page.html").read_text(encoding="utf-8")
     pages = [parse(p) for p in sorted(CONTENT.rglob("*.md"))]
     rendered = [(p, render(p, pages, template)) for p in pages]
@@ -148,6 +167,8 @@ def main() -> None:
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
+    if local:
+        (out / LOCAL_MARK).write_text("build.py --local 生成的预览，下次构建会整个清空重建\n", encoding="utf-8")
     shutil.copytree(ROOT / "assets", out / "assets")
     for p, h in rendered:
         dest = out / p["url"] / "index.html"

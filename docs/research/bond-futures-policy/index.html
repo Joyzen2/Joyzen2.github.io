@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>国债期货怎么对政策事件定价？——TS、TF、T、TL 在五类事件窗口里的反应 · 金正 · 宏观利率研究</title>
+<meta name="description" content="2019 年以来 8 次首发降息，T 在两天的窗口里平均涨 0.51%，折合 10 年收益率 −6.3bp（t −5.4），TS、TF 折合 −10.4bp 和 −8.7bp；LPR 跟随基本不动。期货折算和现券的相关系数 0.88–0.97。降准窗口里长端反而上行，T 折合 +2.4bp，但主要来自 2024 年 9 月一次。">
+<link rel="preload" href="../../assets/fonts/jz-display.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="k-research">
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="../../macro/"><span class="brand-name">金正</span><span class="brand-sub">宏观利率研究</span></a>
+    <nav aria-label="栏目"><a href="../../research/" class=on>研究</a><a href="../../notes/">点评</a><a href="../../reviews/">复盘</a><a href="../../tools/bond-analytics/">工具</a><a href="../../about/">关于</a></nav>
+  </div>
+  <div class="wrap"><div class="top-rule"></div></div>
+</header>
+<main class="wrap">
+<article class="article"><header><h1>国债期货怎么对政策事件定价？——TS、TF、T、TL 在五类事件窗口里的反应</h1><p class="meta">研究 · 2026-11-06 · 数据截至 2026-11-02</p><div class="ruler" aria-hidden="true"></div></header><div class="summary">
+<ul>
+<li><strong>只有首发会动。</strong> 2019 年以来 8 次首发降息，TS、TF、T 折合收益率 −10.4bp、−8.7bp、−6.3bp（t −4.3 到 −6.6，随机窗口安慰剂 p 都是 0.00）。跟随 5 次、LPR 跟随 9 次，T 只有 −1.8bp 和 −0.4bp，都不显著。</li>
+<li><strong>期货和现券一致，2 年那一头例外。</strong> 35 次事件里，T 折算值和 10 年现券的相关系数 0.90，平均绝对差 1.4bp。TS 折算值平均比现券多下行 1.9bp，2019–2020 年它的经验久期只有 1 年左右，把变化放大了。</li>
+<li><strong>降息时现券曲线接近平移。</strong> 首发时 10 年减 2 年只变 +0.2bp；期货折算是 +4.0bp，多出来的来自 TS 的放大。降准时略陡（现券 +1.6bp，t 1.9），是长端上行带来的。</li>
+<li><strong>事件之后不再继续走。</strong> 首发后第 5、10、20 个交易日，T 又涨 0.13%、0.18%、0.21%，t 都在 1.7 以下，安慰剂 p 0.49–0.78。</li>
+</ul>
+</div>
+<h2 id="_1">研究问题</h2>
+<p>期货是多数机构调整久期的工具。这篇回答：四个品种对五类事件各反应多少；和现券是否一致；曲线怎么动；事件之后会不会继续走。</p>
+<figure class="chart"><svg class="vz" viewBox="0 0 460 166" role="img" xmlns="http://www.w3.org/2000/svg"><title>事件窗口里，期货价格变化折算的收益率变化</title><desc>宽松方向，bp；负数是收益率下行。星号是随机窗口安慰剂 p&lt;0.05，淡色是不显著。</desc><style>.vz text{font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;fill:#0F2340;}.vz .t2{fill:#3D5371;}.vz .t3{fill:#55697F;}.vz .grid{stroke:#DDE3EA;stroke-width:1;}.vz .base{stroke:#A7B4C2;stroke-width:1;}</style><text x="17.6" y="44.0" font-size="13" text-anchor="end" dominant-baseline="middle">TS</text><text x="17.6" y="72.0" font-size="13" text-anchor="end" dominant-baseline="middle">TF</text><text x="17.6" y="100.0" font-size="13" text-anchor="end" dominant-baseline="middle">T</text><text x="17.6" y="128.0" font-size="13" text-anchor="end" dominant-baseline="middle">TL</text><text x="96.7" y="12.0" font-size="13" text-anchor="middle" dominant-baseline="middle" font-weight="600">首发</text><line x1="63.1" y1="30.0" x2="63.1" y2="142.0" class="grid"/><line x1="78.2" y1="30.0" x2="78.2" y2="142.0" class="grid"/><line x1="93.3" y1="30.0" x2="93.3" y2="142.0" class="grid"/><line x1="108.4" y1="30.0" x2="108.4" y2="142.0" class="base"/><path d="M108.43,37.00H80.00Q77.00,37.00 77.00,40.00V48.00Q77.00,51.00 80.00,51.00H108.43Z" fill="#0F2340"><title>TS · 首发：−10.4bp</title></path><text x="73.0" y="44.0" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t2">−10.4*</text><path d="M108.43,65.00H85.14Q82.14,65.00 82.14,68.00V76.00Q82.14,79.00 85.14,79.00H108.43Z" fill="#0F2340"><title>TF · 首发：−8.7bp</title></path><text x="78.1" y="72.0" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t2">−8.7*</text><path d="M108.43,93.00H92.39Q89.39,93.00 89.39,96.00V104.00Q89.39,107.00 92.39,107.00H108.43Z" fill="#0F2340"><title>T · 首发：−6.3bp</title></path><text x="85.4" y="100.0" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t2">−6.3*</text><path d="M108.43,121.00H97.53Q94.53,121.00 94.53,124.00V132.00Q94.53,135.00 97.53,135.00H108.43Z" fill="#C5D0DB"><title>TL · 首发：−4.6bp</title></path><text x="90.5" y="128.0" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t2">−4.6</text><text x="244.8" y="12.0" font-size="13" text-anchor="middle" dominant-baseline="middle" font-weight="600">LPR 跟随</text><line x1="211.2" y1="30.0" x2="211.2" y2="142.0" class="grid"/><line x1="226.3" y1="30.0" x2="226.3" y2="142.0" class="grid"/><line x1="241.5" y1="30.0" x2="241.5" y2="142.0" class="grid"/><line x1="256.6" y1="30.0" x2="256.6" y2="142.0" class="base"/><path d="M256.56,37.00H249.89Q246.89,37.00 246.89,40.00V48.00Q246.89,51.00 249.89,51.00H256.56Z" fill="#C5D0DB"><title>TS · LPR 跟随：−3.2bp</title></path><text x="242.9" y="44.0" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t2">−3.2</text><path d="M256.56,65.00H254.14Q251.73,65.00 251.73,67.42V76.58Q251.73,79.00 254.14,79.00H256.56Z" fill="#C5D0DB"><title>TF · LPR 跟随：−1.6bp</title></path><text x="247.7" y="72.0" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t2">−1.6</text><path d="M256.56,93.00H255.96Q255.35,93.00 255.35,93.60V106.40Q255.35,107.00 255.96,107.00H256.56Z" fill="#C5D0DB"><title>T · LPR 跟随：−0.4bp</title></path><text x="251.4" y="100.0" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t2">−0.4</text><path d="M256.56,121.00H255.96Q255.35,121.00 255.35,121.60V134.40Q255.35,135.00 255.96,135.00H256.56Z" fill="#C5D0DB"><title>TL · LPR 跟随：−0.4bp</title></path><text x="251.4" y="128.0" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t2">−0.4</text><text x="392.9" y="12.0" font-size="13" text-anchor="middle" dominant-baseline="middle" font-weight="600">降准</text><line x1="359.4" y1="30.0" x2="359.4" y2="142.0" class="grid"/><line x1="374.5" y1="30.0" x2="374.5" y2="142.0" class="grid"/><line x1="389.6" y1="30.0" x2="389.6" y2="142.0" class="grid"/><line x1="404.7" y1="30.0" x2="404.7" y2="142.0" class="base"/><path d="M404.69,37.00H405.00Q405.30,37.00 405.30,37.30V50.70Q405.30,51.00 405.00,51.00H404.69Z" fill="#C5D0DB"><title>TS · 降准：+0.2bp</title></path><text x="409.3" y="44.0" font-size="11.5" text-anchor="start" dominant-baseline="middle" class="t2">+0.2</text><path d="M404.69,65.00H406.81Q408.92,65.00 408.92,67.12V76.88Q408.92,79.00 406.81,79.00H404.69Z" fill="#C5D0DB"><title>TF · 降准：+1.4bp</title></path><text x="412.9" y="72.0" font-size="11.5" text-anchor="start" dominant-baseline="middle" class="t2">+1.4</text><path d="M404.69,93.00H408.95Q411.95,93.00 411.95,96.00V104.00Q411.95,107.00 408.95,107.00H404.69Z" fill="#0F2340"><title>T · 降准：+2.4bp</title></path><text x="415.9" y="100.0" font-size="11.5" text-anchor="start" dominant-baseline="middle" class="t2">+2.4*</text><path d="M404.69,121.00H416.50Q419.50,121.00 419.50,124.00V132.00Q419.50,135.00 416.50,135.00H404.69Z" fill="#0F2340"><title>TL · 降准：+4.9bp</title></path><text x="423.5" y="128.0" font-size="11.5" text-anchor="start" dominant-baseline="middle" class="t2">+4.9*</text></svg><figcaption><b>图 1　三类事件窗口里，期货价格变化折算的收益率变化</b><span class="fig-note">2019 年以来，宽松方向，bp。星号表示随机窗口安慰剂 p&lt;0.05，淡色表示不显著。</span></figcaption></figure>
+<h2 id="_2">数据和方法</h2>
+<ul>
+<li><strong>合约</strong>：中金所单合约日线，T、TF、TS 从 2019-01-01 起，TL 从 2023-04-19 起；主力是当天持仓量最大的合约。TL2306 上市当天有一行价格为 0，按缺失处理。</li>
+<li><strong>事件</strong>：2019 年以来首发 8 次、跟随 5 次、LPR 跟随 9 次、发布会 2 次、降准 12 次，都是宽松方向。窗口是公告日前最后一个交易日收盘到公告日后第一个交易日收盘，两端用窗口起点的主力。2025-05-07 发布会和降准同一天，同一个窗口在两组各算一次。</li>
+<li><strong>经验久期</strong>：过去 250 个交易日（至少 60 天）期货日收益对对应期限收益率日变化回归，斜率取相反数；折算的收益率变化 = −价格变化 ÷ 经验久期。历史不足 60 天的事件不进统计（2019-01-04 降准，TL 2023 年 6 月的三次）。</li>
+<li><strong>检验</strong>：每组均值的 t；随机窗口安慰剂（同宽、同数量，避开所有事件前后 10 个交易日，2000 次，种子 0）。规则在看结果之前写定。</li>
+</ul>
+<h2 id="lpr">证据一：只有首发会动，LPR 跟随基本不动</h2>
+<div class="table"><table>
+<thead>
+<tr>
+<th>品种</th>
+<th>事件</th>
+<th style="text-align: right;">次数</th>
+<th style="text-align: right;">价格变化</th>
+<th style="text-align: right;">折算</th>
+<th style="text-align: right;">t</th>
+<th style="text-align: right;">安慰剂 p</th>
+<th style="text-align: right;">现券</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TS</td>
+<td>首发</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">+0.14%</td>
+<td style="text-align: right;">−10.4bp</td>
+<td style="text-align: right;">−4.3</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">−6.3bp</td>
+</tr>
+<tr>
+<td>TF</td>
+<td>首发</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">+0.37%</td>
+<td style="text-align: right;">−8.7bp</td>
+<td style="text-align: right;">−6.6</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">−7.6bp</td>
+</tr>
+<tr>
+<td>T</td>
+<td>首发</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">+0.51%</td>
+<td style="text-align: right;">−6.3bp</td>
+<td style="text-align: right;">−5.4</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">−6.1bp</td>
+</tr>
+<tr>
+<td>TL</td>
+<td>首发</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">+0.75%</td>
+<td style="text-align: right;">−4.6bp</td>
+<td style="text-align: right;">−2.2</td>
+<td style="text-align: right;">0.06</td>
+<td style="text-align: right;">−3.0bp</td>
+</tr>
+<tr>
+<td>T</td>
+<td>跟随</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">+0.13%</td>
+<td style="text-align: right;">−1.8bp</td>
+<td style="text-align: right;">−0.7</td>
+<td style="text-align: right;">0.28</td>
+<td style="text-align: right;">−1.8bp</td>
+</tr>
+<tr>
+<td>T</td>
+<td>LPR 跟随</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">+0.03%</td>
+<td style="text-align: right;">−0.4bp</td>
+<td style="text-align: right;">−0.6</td>
+<td style="text-align: right;">0.82</td>
+<td style="text-align: right;">+0.1bp</td>
+</tr>
+<tr>
+<td>TS</td>
+<td>LPR 跟随</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">+0.05%</td>
+<td style="text-align: right;">−3.2bp</td>
+<td style="text-align: right;">−1.1</td>
+<td style="text-align: right;">0.06</td>
+<td style="text-align: right;">−1.5bp</td>
+</tr>
+<tr>
+<td>T</td>
+<td>降准</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">−0.18%</td>
+<td style="text-align: right;">+2.4bp</td>
+<td style="text-align: right;">+1.4</td>
+<td style="text-align: right;">0.01</td>
+<td style="text-align: right;">+1.4bp</td>
+</tr>
+<tr>
+<td>TL</td>
+<td>降准</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">−0.88%</td>
+<td style="text-align: right;">+4.9bp</td>
+<td style="text-align: right;">+1.3</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">+3.9bp</td>
+</tr>
+</tbody>
+</table></div>
+<p>宽松方向。四个品种、五组事件的完整表在结果文件里。</p>
+<figure class="chart"><svg class="vz" viewBox="0 0 460 228" role="img" xmlns="http://www.w3.org/2000/svg"><title>首发事件：每一次的折算收益率变化</title><desc>每个点是一次首发事件，竖线是均值。</desc><style>.vz text{font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;fill:#0F2340;}.vz .t2{fill:#3D5371;}.vz .t3{fill:#55697F;}.vz .grid{stroke:#DDE3EA;stroke-width:1;}.vz .base{stroke:#A7B4C2;stroke-width:1;}</style><line x1="73.9" y1="8.0" x2="73.9" y2="184.0" class="grid"/><text x="73.9" y="196.0" font-size="11.5" text-anchor="middle" dominant-baseline="middle" class="t3">−20</text><line x1="162.9" y1="8.0" x2="162.9" y2="184.0" class="grid"/><text x="162.9" y="196.0" font-size="11.5" text-anchor="middle" dominant-baseline="middle" class="t3">−15</text><line x1="251.9" y1="8.0" x2="251.9" y2="184.0" class="grid"/><text x="251.9" y="196.0" font-size="11.5" text-anchor="middle" dominant-baseline="middle" class="t3">−10</text><line x1="340.8" y1="8.0" x2="340.8" y2="184.0" class="grid"/><text x="340.8" y="196.0" font-size="11.5" text-anchor="middle" dominant-baseline="middle" class="t3">−5</text><line x1="429.8" y1="8.0" x2="429.8" y2="184.0" class="base"/><text x="429.8" y="196.0" font-size="11.5" text-anchor="middle" dominant-baseline="middle" class="t3">0</text><text x="452.0" y="212.0" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t3">折算的收益率变化，bp</text><text x="25.3" y="27.0" font-size="13" text-anchor="end" dominant-baseline="middle">TS</text><text x="25.3" y="42.0" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t3">8 次</text><circle cx="307.9" cy="34.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−6.8bp</title></circle><circle cx="59.5" cy="34.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−20.8bp</title></circle><circle cx="75.9" cy="34.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−19.9bp</title></circle><circle cx="206.5" cy="34.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−12.6bp</title></circle><circle cx="275.2" cy="34.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−8.7bp</title></circle><circle cx="356.7" cy="34.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−4.1bp</title></circle><circle cx="368.4" cy="34.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−3.5bp</title></circle><circle cx="312.7" cy="34.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−6.6bp</title></circle><rect x="243.8" y="23.0" width="3" height="22" rx="1.5" fill="#0F2340"><title>均值 −10.4bp</title></rect><text x="245.3" y="16.0" font-size="11.5" text-anchor="middle" dominant-baseline="middle" class="t2">均值 −10.4bp</text><text x="25.3" y="71.0" font-size="13" text-anchor="end" dominant-baseline="middle">TF</text><text x="25.3" y="86.0" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t3">8 次</text><circle cx="335.1" cy="78.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−5.3bp</title></circle><circle cx="180.0" cy="78.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−14.0bp</title></circle><circle cx="249.5" cy="78.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−10.1bp</title></circle><circle cx="234.8" cy="78.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−11.0bp</title></circle><circle cx="202.7" cy="78.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−12.8bp</title></circle><circle cx="347.9" cy="78.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−4.6bp</title></circle><circle cx="341.5" cy="78.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−5.0bp</title></circle><circle cx="307.0" cy="78.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−6.9bp</title></circle><rect x="273.3" y="67.0" width="3" height="22" rx="1.5" fill="#0F2340"><title>均值 −8.7bp</title></rect><text x="274.8" y="60.0" font-size="11.5" text-anchor="middle" dominant-baseline="middle" class="t2">均值 −8.7bp</text><text x="25.3" y="115.0" font-size="13" text-anchor="end" dominant-baseline="middle">T</text><text x="25.3" y="130.0" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t3">8 次</text><circle cx="327.3" cy="122.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−5.8bp</title></circle><circle cx="183.4" cy="122.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−13.8bp</title></circle><circle cx="341.9" cy="122.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−4.9bp</title></circle><circle cx="349.7" cy="122.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−4.5bp</title></circle><circle cx="287.3" cy="122.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−8.0bp</title></circle><circle cx="364.1" cy="122.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−3.7bp</title></circle><circle cx="352.9" cy="122.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−4.3bp</title></circle><circle cx="330.9" cy="122.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−5.6bp</title></circle><rect x="315.7" y="111.0" width="3" height="22" rx="1.5" fill="#0F2340"><title>均值 −6.3bp</title></rect><text x="317.2" y="104.0" font-size="11.5" text-anchor="middle" dominant-baseline="middle" class="t2">均值 −6.3bp</text><text x="25.3" y="159.0" font-size="13" text-anchor="end" dominant-baseline="middle">TL</text><text x="25.3" y="174.0" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t3">2 次</text><circle cx="311.6" cy="166.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−6.6bp</title></circle><circle cx="385.7" cy="166.0" r="4" fill="#55697F" stroke="#F4F6F8" stroke-width="2"><title>−2.5bp</title></circle><rect x="347.2" y="155.0" width="3" height="22" rx="1.5" fill="#0F2340"><title>均值 −4.6bp</title></rect><text x="348.7" y="148.0" font-size="11.5" text-anchor="middle" dominant-baseline="middle" class="t2">均值 −4.6bp</text></svg><figcaption><b>图 2　首发事件：每一次的折算收益率变化</b><span class="fig-note">每个点是一次首发事件，竖线是均值。</span></figcaption></figure>
+<ul>
+<li><strong>首发反应最大，和预期一致。</strong> 按基点看短端动得更多，原因见证据二。</li>
+<li><strong>LPR 跟随基本不动，和预期一致。</strong> T、TF、TL 都在 ±2bp 以内；TS −3.2bp、p 0.06，只有 9 次，不当结论。</li>
+<li><strong>降准的 p 很小，但不能当结论。</strong> T 平均跌 0.18%，p 0.01，t 只有 1.4。2024-09-27 那一次 T 跌 1.16%、折合 +16.8bp，占了平均值的大半；安慰剂抽的是平静时期的窗口，波动小，p 偏小。那个窗口里沪深300 涨了 13%（3545 到 4018），资金从债市转向股市可能是主因，这是推断。</li>
+</ul>
+<h2 id="2">证据二：期货和现券一致，2 年那一头被放大</h2>
+<figure class="chart"><svg class="vz" viewBox="0 0 460 194" role="img" xmlns="http://www.w3.org/2000/svg"><title>10 年：期货折算和现券的平均变化</title><desc>宽松方向，bp；同一批事件窗口。</desc><style>.vz text{font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;fill:#0F2340;}.vz .t2{fill:#3D5371;}.vz .t3{fill:#55697F;}.vz .grid{stroke:#DDE3EA;stroke-width:1;}.vz .base{stroke:#A7B4C2;stroke-width:1;}</style><text x="59.2" y="44.0" font-size="13" text-anchor="end" dominant-baseline="middle">首发</text><text x="59.2" y="72.0" font-size="13" text-anchor="end" dominant-baseline="middle">跟随</text><text x="59.2" y="100.0" font-size="13" text-anchor="end" dominant-baseline="middle">LPR 跟随</text><text x="59.2" y="128.0" font-size="13" text-anchor="end" dominant-baseline="middle">发布会</text><text x="59.2" y="156.0" font-size="13" text-anchor="end" dominant-baseline="middle">降准</text><text x="164.9" y="12.0" font-size="13" text-anchor="middle" dominant-baseline="middle" font-weight="600">T 期货折算</text><line x1="88.2" y1="30.0" x2="88.2" y2="170.0" class="grid"/><line x1="122.8" y1="30.0" x2="122.8" y2="170.0" class="grid"/><line x1="157.3" y1="30.0" x2="157.3" y2="170.0" class="grid"/><line x1="191.8" y1="30.0" x2="191.8" y2="170.0" class="base"/><path d="M191.84,37.00H107.80Q104.80,37.00 104.80,40.00V48.00Q104.80,51.00 107.80,51.00H191.84Z" fill="#0F2340"><title>首发 · T 期货折算：−6.3bp</title></path><text x="100.8" y="44.0" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t2">−6.3</text><path d="M191.84,65.00H169.97Q166.97,65.00 166.97,68.00V76.00Q166.97,79.00 169.97,79.00H191.84Z" fill="#0F2340"><title>跟随 · T 期货折算：−1.8bp</title></path><text x="163.0" y="72.0" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t2">−1.8</text><path d="M191.84,93.00H189.08Q186.31,93.00 186.31,95.76V104.24Q186.31,107.00 189.08,107.00H191.84Z" fill="#0F2340"><title>LPR 跟随 · T 期货折算：−0.4bp</title></path><text x="182.3" y="100.0" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t2">−0.4</text><path d="M191.84,121.00H192.53Q193.22,121.00 193.22,121.69V134.31Q193.22,135.00 192.53,135.00H191.84Z" fill="#0F2340"><title>发布会 · T 期货折算：+0.1bp</title></path><text x="197.2" y="128.0" font-size="11.5" text-anchor="start" dominant-baseline="middle" class="t2">+0.1</text><path d="M191.84,149.00H222.00Q225.00,149.00 225.00,152.00V160.00Q225.00,163.00 222.00,163.00H191.84Z" fill="#0F2340"><title>降准 · T 期货折算：+2.4bp</title></path><text x="229.0" y="156.0" font-size="11.5" text-anchor="start" dominant-baseline="middle" class="t2">+2.4</text><text x="366.3" y="12.0" font-size="13" text-anchor="middle" dominant-baseline="middle" font-weight="600">10 年现券</text><line x1="289.6" y1="30.0" x2="289.6" y2="170.0" class="grid"/><line x1="324.2" y1="30.0" x2="324.2" y2="170.0" class="grid"/><line x1="358.7" y1="30.0" x2="358.7" y2="170.0" class="grid"/><line x1="393.2" y1="30.0" x2="393.2" y2="170.0" class="base"/><path d="M393.24,37.00H311.96Q308.96,37.00 308.96,40.00V48.00Q308.96,51.00 311.96,51.00H393.24Z" fill="#0F2340"><title>首发 · 10 年现券：−6.1bp</title></path><text x="305.0" y="44.0" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t2">−6.1</text><path d="M393.24,65.00H371.37Q368.37,65.00 368.37,68.00V76.00Q368.37,79.00 371.37,79.00H393.24Z" fill="#0F2340"><title>跟随 · 10 年现券：−1.8bp</title></path><text x="364.4" y="72.0" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t2">−1.8</text><path d="M393.24,93.00H393.93Q394.62,93.00 394.62,93.69V106.31Q394.62,107.00 393.93,107.00H393.24Z" fill="#0F2340"><title>LPR 跟随 · 10 年现券：+0.1bp</title></path><text x="398.6" y="100.0" font-size="11.5" text-anchor="start" dominant-baseline="middle" class="t2">+0.1</text><path d="M393.24,121.00H396.00Q398.77,121.00 398.77,123.76V132.24Q398.77,135.00 396.00,135.00H393.24Z" fill="#0F2340"><title>发布会 · 10 年现券：+0.4bp</title></path><text x="402.8" y="128.0" font-size="11.5" text-anchor="start" dominant-baseline="middle" class="t2">+0.4</text><path d="M393.24,149.00H409.58Q412.58,149.00 412.58,152.00V160.00Q412.58,163.00 409.58,163.00H393.24Z" fill="#0F2340"><title>降准 · 10 年现券：+1.4bp</title></path><text x="416.6" y="156.0" font-size="11.5" text-anchor="start" dominant-baseline="middle" class="t2">+1.4</text></svg><figcaption><b>图 3　10 年：期货折算和现券的平均变化</b><span class="fig-note">宽松方向，bp；同一批事件窗口。</span></figcaption></figure>
+<div class="table"><table>
+<thead>
+<tr>
+<th>品种</th>
+<th style="text-align: right;">事件数</th>
+<th style="text-align: right;">相关系数</th>
+<th style="text-align: right;">平均绝对差</th>
+<th style="text-align: right;">平均差（期货 − 现券）</th>
+<th style="text-align: right;">方向相同</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TS</td>
+<td style="text-align: right;">35</td>
+<td style="text-align: right;">0.88</td>
+<td style="text-align: right;">2.7bp</td>
+<td style="text-align: right;">−1.9bp</td>
+<td style="text-align: right;">100%</td>
+</tr>
+<tr>
+<td>TF</td>
+<td style="text-align: right;">35</td>
+<td style="text-align: right;">0.94</td>
+<td style="text-align: right;">1.6bp</td>
+<td style="text-align: right;">−0.5bp</td>
+<td style="text-align: right;">86%</td>
+</tr>
+<tr>
+<td>T</td>
+<td style="text-align: right;">35</td>
+<td style="text-align: right;">0.90</td>
+<td style="text-align: right;">1.4bp</td>
+<td style="text-align: right;">+0.1bp</td>
+<td style="text-align: right;">86%</td>
+</tr>
+<tr>
+<td>TL</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.97</td>
+<td style="text-align: right;">1.4bp</td>
+<td style="text-align: right;">+0.2bp</td>
+<td style="text-align: right;">92%</td>
+</tr>
+</tbody>
+</table></div>
+<p>TF、T、TL 和现券没有系统性偏差。TS 的偏差集中在 2019–2020 年：到 2020 年 3 月，它的经验久期只有 1.0–1.1 年，2022 年以后是 1.6–2.0 年；2020-02-03 和 2020-03-30 两次首发，TS 折合 −20.8bp 和 −19.9bp，现券只有 −11.0bp 和 −8.0bp。可能是 2 年现券的日度噪音把回归斜率压小了，这是推断。</p>
+<h2 id="_3">证据三：曲线怎么动，取决于用期货还是现券</h2>
+<figure class="chart"><svg class="vz" viewBox="0 0 460 194" role="img" xmlns="http://www.w3.org/2000/svg"><title>10 年减 2 年利差的变化</title><desc>宽松方向，bp；正数是变陡。</desc><style>.vz text{font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;fill:#0F2340;}.vz .t2{fill:#3D5371;}.vz .t3{fill:#55697F;}.vz .grid{stroke:#DDE3EA;stroke-width:1;}.vz .base{stroke:#A7B4C2;stroke-width:1;}</style><text x="59.2" y="44.0" font-size="13" text-anchor="end" dominant-baseline="middle">首发</text><text x="59.2" y="72.0" font-size="13" text-anchor="end" dominant-baseline="middle">跟随</text><text x="59.2" y="100.0" font-size="13" text-anchor="end" dominant-baseline="middle">LPR 跟随</text><text x="59.2" y="128.0" font-size="13" text-anchor="end" dominant-baseline="middle">发布会</text><text x="59.2" y="156.0" font-size="13" text-anchor="end" dominant-baseline="middle">降准</text><text x="164.9" y="12.0" font-size="13" text-anchor="middle" dominant-baseline="middle" font-weight="600">期货折算（T 对 TS）</text><line x1="111.5" y1="30.0" x2="111.5" y2="170.0" class="base"/><line x1="156.0" y1="30.0" x2="156.0" y2="170.0" class="grid"/><line x1="200.5" y1="30.0" x2="200.5" y2="170.0" class="grid"/><path d="M111.48,37.00H197.51Q200.51,37.00 200.51,40.00V48.00Q200.51,51.00 197.51,51.00H111.48Z" fill="#0F2340"><title>首发 · 期货折算（T 对 TS）：+4.0bp</title></path><text x="204.5" y="44.0" font-size="11.5" text-anchor="start" dominant-baseline="middle" class="t2">+4.0</text><path d="M111.48,65.00H186.39Q189.39,65.00 189.39,68.00V76.00Q189.39,79.00 186.39,79.00H111.48Z" fill="#0F2340"><title>跟随 · 期货折算（T 对 TS）：+3.5bp</title></path><text x="193.4" y="72.0" font-size="11.5" text-anchor="start" dominant-baseline="middle" class="t2">+3.5</text><path d="M111.48,93.00H170.80Q173.80,93.00 173.80,96.00V104.00Q173.80,107.00 170.80,107.00H111.48Z" fill="#0F2340"><title>LPR 跟随 · 期货折算（T 对 TS）：+2.8bp</title></path><text x="177.8" y="100.0" font-size="11.5" text-anchor="start" dominant-baseline="middle" class="t2">+2.8</text><path d="M111.48,121.00H222.00Q225.00,121.00 225.00,124.00V132.00Q225.00,135.00 222.00,135.00H111.48Z" fill="#0F2340"><title>发布会 · 期货折算（T 对 TS）：+5.1bp</title></path><text x="229.0" y="128.0" font-size="11.5" text-anchor="start" dominant-baseline="middle" class="t2">+5.1</text><path d="M111.48,149.00H157.45Q160.45,149.00 160.45,152.00V160.00Q160.45,163.00 157.45,163.00H111.48Z" fill="#0F2340"><title>降准 · 期货折算（T 对 TS）：+2.2bp</title></path><text x="164.4" y="156.0" font-size="11.5" text-anchor="start" dominant-baseline="middle" class="t2">+2.2</text><text x="366.3" y="12.0" font-size="13" text-anchor="middle" dominant-baseline="middle" font-weight="600">现券</text><line x1="312.9" y1="30.0" x2="312.9" y2="170.0" class="base"/><line x1="357.4" y1="30.0" x2="357.4" y2="170.0" class="grid"/><line x1="401.9" y1="30.0" x2="401.9" y2="170.0" class="grid"/><path d="M312.88,37.00H315.10Q317.33,37.00 317.33,39.23V48.77Q317.33,51.00 315.10,51.00H312.88Z" fill="#0F2340"><title>首发 · 现券：+0.2bp</title></path><text x="321.3" y="44.0" font-size="11.5" text-anchor="start" dominant-baseline="middle" class="t2">+0.2</text><path d="M312.88,65.00H309.20Q306.20,65.00 306.20,68.00V76.00Q306.20,79.00 309.20,79.00H312.88Z" fill="#0F2340"><title>跟随 · 现券：−0.3bp</title></path><text x="302.2" y="72.0" font-size="11.5" text-anchor="end" dominant-baseline="middle" class="t2">−0.3</text><path d="M312.88,93.00H345.49Q348.49,93.00 348.49,96.00V104.00Q348.49,107.00 345.49,107.00H312.88Z" fill="#0F2340"><title>LPR 跟随 · 现券：+1.6bp</title></path><text x="352.5" y="100.0" font-size="11.5" text-anchor="start" dominant-baseline="middle" class="t2">+1.6</text><path d="M312.88,121.00H394.46Q397.46,121.00 397.46,124.00V132.00Q397.46,135.00 394.46,135.00H312.88Z" fill="#0F2340"><title>发布会 · 现券：+3.8bp</title></path><text x="401.5" y="128.0" font-size="11.5" text-anchor="start" dominant-baseline="middle" class="t2">+3.8</text><path d="M312.88,149.00H345.49Q348.49,149.00 348.49,152.00V160.00Q348.49,163.00 345.49,163.00H312.88Z" fill="#0F2340"><title>降准 · 现券：+1.6bp</title></path><text x="352.5" y="156.0" font-size="11.5" text-anchor="start" dominant-baseline="middle" class="t2">+1.6</text></svg><figcaption><b>图 4　10 年减 2 年利差的变化</b><span class="fig-note">宽松方向，bp；正数是变陡。</span></figcaption></figure>
+<div class="table"><table>
+<thead>
+<tr>
+<th>事件</th>
+<th style="text-align: right;">次数</th>
+<th style="text-align: right;">期货折算</th>
+<th style="text-align: right;">t</th>
+<th style="text-align: right;">现券</th>
+<th style="text-align: right;">t</th>
+<th style="text-align: right;">做陡组合</th>
+<th style="text-align: right;">t</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>首发</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">+4.0bp</td>
+<td style="text-align: right;">2.1</td>
+<td style="text-align: right;">+0.2bp</td>
+<td style="text-align: right;">0.1</td>
+<td style="text-align: right;">+0.05%</td>
+<td style="text-align: right;">2.2</td>
+</tr>
+<tr>
+<td>跟随</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">+3.5bp</td>
+<td style="text-align: right;">2.2</td>
+<td style="text-align: right;">−0.3bp</td>
+<td style="text-align: right;">−0.2</td>
+<td style="text-align: right;">+0.04%</td>
+<td style="text-align: right;">2.4</td>
+</tr>
+<tr>
+<td>LPR 跟随</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">+2.8bp</td>
+<td style="text-align: right;">0.9</td>
+<td style="text-align: right;">+1.6bp</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">+0.04%</td>
+<td style="text-align: right;">0.9</td>
+</tr>
+<tr>
+<td>发布会</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">+5.1bp</td>
+<td style="text-align: right;">2.4</td>
+<td style="text-align: right;">+3.8bp</td>
+<td style="text-align: right;">3.0</td>
+<td style="text-align: right;">+0.09%</td>
+<td style="text-align: right;">2.4</td>
+</tr>
+<tr>
+<td>降准</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">+2.2bp</td>
+<td style="text-align: right;">2.3</td>
+<td style="text-align: right;">+1.6bp</td>
+<td style="text-align: right;">1.9</td>
+<td style="text-align: right;">+0.04%</td>
+<td style="text-align: right;">2.7</td>
+</tr>
+</tbody>
+</table></div>
+<p>做陡组合是多 TS、空 T，按经验久期配平，收益按 TS 一腿的名义本金算。</p>
+<ul>
+<li><strong>降息时现券接近平移，和预期一致。</strong> 期货折算的 +4.0bp 主要是 TS 被放大，不是曲线真的变陡。</li>
+<li><strong>做陡组合的「显著」要打折扣。</strong> 每次赚 0.04%–0.09%，但久期估小了，TS 一腿配多了，收益里有一块是配平误差。</li>
+<li><strong>降准时略陡，方向和预期一致，幅度小</strong>，而且来自长端上行。</li>
+<li><strong>30 年减 10 年每组只有 1–4 次</strong>，不下结论。</li>
+</ul>
+<h2 id="_4">证据四：首发之后不再继续走</h2>
+<div class="table"><table>
+<thead>
+<tr>
+<th>窗口终点之后</th>
+<th style="text-align: right;">事件数</th>
+<th style="text-align: right;">T 的累计价格变化</th>
+<th style="text-align: right;">t</th>
+<th style="text-align: right;">安慰剂 p</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5 个交易日</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">+0.13%</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">0.49</td>
+</tr>
+<tr>
+<td>10 个交易日</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">+0.18%</td>
+<td style="text-align: right;">1.6</td>
+<td style="text-align: right;">0.57</td>
+</tr>
+<tr>
+<td>20 个交易日</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">+0.21%</td>
+<td style="text-align: right;">0.6</td>
+<td style="text-align: right;">0.78</td>
+</tr>
+</tbody>
+</table></div>
+<p>20 日只有 6 次。安慰剂窗口的平均也是正的（20 日 +0.13%），这几年债市整体在涨。和预期一致，信息在两天里基本反映完了。</p>
+<h2 id="2026-10-30">案例：2026 年 10 月 30 日的换锚公告</h2>
+<p>10 月 30 日收盘后，央行公告 11 月 2 日起每个工作日做隔夜逆回购，利率 1.25%，7 天逆回购改为利率招标。只作描述，不进统计。</p>
+<div class="table"><table>
+<thead>
+<tr>
+<th>品种</th>
+<th style="text-align: right;">10-30</th>
+<th style="text-align: right;">11-02</th>
+<th style="text-align: right;">变化</th>
+<th style="text-align: right;">经验久期</th>
+<th style="text-align: right;">折算</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TS2612</td>
+<td style="text-align: right;">102.668</td>
+<td style="text-align: right;">102.680</td>
+<td style="text-align: right;">+0.012 元</td>
+<td style="text-align: right;">1.7 年</td>
+<td style="text-align: right;">−0.7bp</td>
+</tr>
+<tr>
+<td>TF2612</td>
+<td style="text-align: right;">106.700</td>
+<td style="text-align: right;">106.755</td>
+<td style="text-align: right;">+0.055 元</td>
+<td style="text-align: right;">5.1 年</td>
+<td style="text-align: right;">−1.0bp</td>
+</tr>
+<tr>
+<td>T2612</td>
+<td style="text-align: right;">109.840</td>
+<td style="text-align: right;">109.935</td>
+<td style="text-align: right;">+0.095 元</td>
+<td style="text-align: right;">7.2 年</td>
+<td style="text-align: right;">−1.2bp</td>
+</tr>
+<tr>
+<td>TL2612</td>
+<td style="text-align: right;">117.42</td>
+<td style="text-align: right;">117.80</td>
+<td style="text-align: right;">+0.38 元</td>
+<td style="text-align: right;">18.0 年</td>
+<td style="text-align: right;">−1.8bp</td>
+</tr>
+</tbody>
+</table></div>
+<p>T 折合 −1.2bp，约为首发降息平均的五分之一。同一个周末还公布了 10 月官方制造业 PMI 49.3（9 月 50.1），这点涨幅不能全算在公告头上。</p>
+<h2 id="_5">市场含义</h2>
+<ol>
+<li><strong>先分清首发还是跟随。</strong> 首发降息时期货有 6–10bp 的反应，跟随的 MLF、LPR 基本不动。</li>
+<li><strong>T、TF、TL 可以近似现券，TS 要小心。</strong> 用经验久期折算会放大 2 年的变化，看短端的反应最好直接看现券。</li>
+<li><strong>降息时不用指望曲线形态的变化。</strong> 现券接近平移；降准时略陡，幅度在 2bp 以内。</li>
+<li><strong>不适用的时候。</strong> 样本只有宽松方向，收紧时是否对称没有验证；新框架下的「首发」还没有先例。</li>
+</ol>
+<h2 id="_6">局限</h2>
+<ul>
+<li>没有可交割券和转换因子，算不了 IRR 和净基差，「折算的基点」只是近似，TS 的偏差就是一例。</li>
+<li>事件少：首发 8 次，TL 每组 1–4 次。</li>
+<li>窗口是日度的，其他消息都算在里面；均值检验说明关系，不说明因果。</li>
+</ul>
+<h2 id="_7">数据和代码</h2>
+<p>代码在 <a href="https://github.com/Joyzen2/macro-rates-research">macro-rates-research</a>（<code>rpt_bond_futures</code> 模块），汇总结果在 <code>results/bond-futures-policy_*.csv</code>。期货是新浪转载的中金所日线（抽查的交易日，收盘价和持仓量都和中金所官网的文件一致），收益率来自中债，政策事件的日期逐次用新闻核实过。逐日行情不放进仓库。</p></article>
+</main>
+<footer class="foot">
+  <div class="wrap">
+    <div class="ruler" aria-hidden="true"></div>
+    <p>框架是 2025 年在中诚信托实习时搭的；这里的研究是实习结束后用公开数据和学校 CSMAR 数据库重建、延伸的，不含任何公司数据。规则在看结果之前写定，事后的修改都标明是修正。</p>
+    <p>金正 · <a href="mailto:zheng.jin20@student.xjtlu.edu.cn">zheng.jin20@student.xjtlu.edu.cn</a> · <a href="https://github.com/Joyzen2">github.com/Joyzen2</a></p>
+  </div>
+</footer>
+</body>
+</html>

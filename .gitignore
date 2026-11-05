@@ -15,3 +15,6 @@ portfolio/src/vendor/
 
 # 期现套利脚本的原始行情缓存，只在本机
 research/basis/.cache/
+
+# build.py --local 的本机预览
+preview/

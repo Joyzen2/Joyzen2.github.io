@@ -13,6 +13,7 @@ from contextlib import contextmanager
 
 import pandas as pd
 
+from . import clock
 from . import config as C
 
 sys.path.insert(0, str(C.REPO / "research" / "basis"))
@@ -54,6 +55,7 @@ class AkshareData:
     def __init__(self, offline: bool = False):
         self.offline = offline
         self._index: dict[str, pd.Series] = {}
+        self._factor_memo: dict[str, pd.Series] = {}
         self._asked: set = set()
         import akshare as ak  # 延迟导入，测试时不需要
         self.ak = ak
@@ -93,7 +95,12 @@ class AkshareData:
             self._index[symbol] = (pd.read_csv(path, parse_dates=["date"]).set_index("date")["close"]
                                    if path.exists() else pd.Series(dtype="float64"))
         have = self._index[symbol]
-        need_from = start if have.empty or have.index.min().date() > start else have.index.max().date() + dt.timedelta(days=1)
+        if have.empty or have.index.min().date() > start:
+            need_from = start
+        else:
+            last = have.index.max().date()
+            # 最后一行若是在当天收盘前写入的，可能是盘中值，重取这一天
+            need_from = last if not clock.written_after_close(path, last) else last + dt.timedelta(days=1)
         if not self.offline and need_from <= end and (symbol, end) not in self._asked:
             self._asked.add((symbol, end))
             df = self._csindex(symbol, need_from, end)
@@ -115,7 +122,9 @@ class AkshareData:
         path = _cache(f"bars/{code}.csv")
         old = pd.read_csv(path, parse_dates=["date"]) if path.exists() else pd.DataFrame()
         short = old.empty or old["date"].min().date() > start + dt.timedelta(days=10)
-        covered = not short and old["date"].max().date() >= end
+        last = None if old.empty else old["date"].max().date()
+        # 缓存到了 end 还不够：end 那一行必须是收盘后取的，盘中取到的是半截日线
+        covered = not short and (last > end or (last == end and clock.written_after_close(path, end)))
         if not self.offline and not covered:
             since = start if short else max(start, (old["date"].max() - pd.Timedelta(days=10)).date())
             df = _retry(lambda: self.ak.stock_zh_a_hist(symbol=code, period="daily", start_date=f"{since:%Y%m%d}",
@@ -134,18 +143,27 @@ class AkshareData:
     def hfq_factor(self, code: str, refresh: bool = True) -> pd.Series:
         """新浪后复权因子（只在除权除息日变化），按日期升序。"""
         path = _cache(f"factors/{code}.csv")
-        fresh = path.exists() and dt.date.fromtimestamp(path.stat().st_mtime) == dt.date.today()
+        if code in self._factor_memo:
+            return self._factor_memo[code]
+        fresh = clock.written_after_close(path, clock.today())   # 今天收盘后取过就不再取
         if refresh and not self.offline and not fresh:
-            df = _retry(lambda: self.ak.stock_zh_a_daily(symbol=sina_symbol(code), adjust="hfq-factor"), f"{code} 复权因子")
-            df.to_csv(path, index=False)
+            try:
+                df = _retry(lambda: self.ak.stock_zh_a_daily(symbol=sina_symbol(code), adjust="hfq-factor"),
+                            f"{code} 复权因子", tries=2)
+                df.to_csv(path, index=False)
+            except RuntimeError:
+                if not path.exists():          # 新浪不提供部分股票（如 689009）的因子，返回空序列由调用方处理
+                    print(f"  {code} 没有复权因子", flush=True)
             time.sleep(0.3)
-        df = pd.read_csv(path)
-        return pd.Series(pd.to_numeric(df["hfq_factor"]).values, index=pd.to_datetime(df["date"]).dt.date).sort_index()
+        df = pd.read_csv(path) if path.exists() else pd.DataFrame({"date": [], "hfq_factor": []})
+        out = pd.Series(pd.to_numeric(df["hfq_factor"]).values, index=pd.to_datetime(df["date"]).dt.date).sort_index()
+        self._factor_memo[code] = out
+        return out
 
     def value_history(self, code: str) -> pd.DataFrame:
         """日频总市值、流通市值（元）、总股本（股），东财，2018 年起。信号日才用，当天只取一次。"""
         path = _cache(f"value/{code}.csv")
-        fresh = path.exists() and dt.date.fromtimestamp(path.stat().st_mtime) == dt.date.today()
+        fresh = clock.written_after_close(path, clock.today())   # 收盘前取的没有当天的行
         if not self.offline and not fresh:
             df = _retry(lambda: self.ak.stock_value_em(symbol=code), f"{code} 估值")
             out = pd.DataFrame({"date": pd.to_datetime(df["数据日期"]), "total_mcap": pd.to_numeric(df["总市值"], errors="coerce"),

@@ -20,6 +20,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from . import clock
 from . import config as C
 from . import hedge as H
 from .broker import Quote, rebalance
@@ -79,6 +80,8 @@ def is_signal_day(day: dt.date, cal: list[dt.date]) -> bool:
 
 def run_day(book: Book, data, day: dt.date, strategy: str = "icir", force_signal: bool = False,
             dry_run: bool = False) -> dict:
+    if day >= clock.today() and not clock.closed(day):
+        raise StaleData(f"{day} 还没有收盘结算（北京时间 {clock.SETTLED_AFTER:%H:%M} 之前），收盘后再跑")
     cal = data.calendar()
     if day not in cal:
         return {"skipped": f"{day} 不是交易日"}

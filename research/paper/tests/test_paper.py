@@ -253,3 +253,50 @@ def test_index_close_cache(tmp_path, monkeypatch):
     d2.offline, d2.ak, d2._index, d2._asked = False, StubAk(), {}, set()
     c = d2.index_close("H00905", dt.date(2026, 11, 2), dt.date(2026, 11, 5))
     assert calls[-1] == ("20261105", "20261105") and len(c) == 4
+
+
+def test_refuses_before_close(tmp_path, monkeypatch):
+    from paper import clock
+    monkeypatch.setattr(clock, "now", lambda: dt.datetime(2026, 12, 1, 10, 2, tzinfo=clock.TZ))
+    with pytest.raises(StaleData, match="收盘后再跑"):
+        run_day(Book(tmp_path), FakeData(), dt.date(2026, 12, 1), strategy="benchmark", dry_run=True)
+    assert not (tmp_path / "account.json").exists()
+
+
+def test_intraday_bars_are_refetched_after_close(tmp_path, monkeypatch):
+    """收盘前取到的当天那一行是半截的：收盘后重跑必须重新请求，并用新值覆盖。"""
+    import os
+    from paper import clock
+    from paper import data as D
+    monkeypatch.setattr(C, "CACHE", tmp_path)
+    day = dt.date(2026, 11, 5)
+    state = {"close": 1400.0, "amount": 2.3e8}             # 盘中
+    calls = []
+
+    class StubAk:
+        def stock_zh_a_hist(self, symbol, period, start_date, end_date, adjust):
+            calls.append(clock.now())
+            days = list(pd.bdate_range("2026-10-26", day))
+            close = [1500.0] * (len(days) - 1) + [state["close"]]
+            amount = [1e9] * (len(days) - 1) + [state["amount"]]
+            return pd.DataFrame({"日期": days, "开盘": close, "最高": close, "最低": close, "收盘": close,
+                                 "成交量": 1, "成交额": amount, "换手率": 0.1})
+
+    def run_at(hh, mm):
+        t = dt.datetime(2026, 11, 5, hh, mm, tzinfo=clock.TZ)
+        monkeypatch.setattr(clock, "now", lambda: t)
+        d = object.__new__(D.AkshareData)
+        d.offline, d.ak, d._index, d._asked, d._factor_memo = False, StubAk(), {}, set(), {}
+        out = d.bars("600519", dt.date(2026, 10, 27), day)
+        path = tmp_path / "bars" / "600519.csv"
+        os.utime(path, (t.timestamp(), t.timestamp()))   # 让文件修改时间等于这次运行的时间
+        return out
+
+    morning = run_at(10, 2)
+    assert float(morning["close"].iloc[-1]) == 1400.0
+    state.update(close=1452.5, amount=9.8e8)              # 收盘
+    evening = run_at(20, 45)
+    assert len(calls) == 2, "收盘后应当重新请求"
+    assert float(evening["close"].iloc[-1]) == 1452.5 and float(evening["amount"].iloc[-1]) == 9.8e8
+    again = run_at(21, 0)
+    assert len(calls) == 2 and float(again["close"].iloc[-1]) == 1452.5   # 收盘后取过的不再重复请求

@@ -130,6 +130,56 @@ class FakeData:
         months = [(y + (m - 1 + k) // 12, (m - 1 + k) % 12 + 1) for k in range(4)]
         return {f"IC{yy % 100:02d}{mm:02d}": float(self.idx[day]) * (1 - 0.005 * k) for k, (yy, mm) in enumerate(months)}
 
+    def ic_opens(self, day):
+        return self.ic_closes(day)
+
+
+def test_hedge_opens_with_the_long():
+    """建仓当天空头按开盘价建立，开盘到收盘的市场涨跌被对冲。"""
+    closes, opens = {"IC2611": 6300.0, "IC2612": 6280.0}, {"IC2611": 6100.0, "IC2612": 6080.0}
+    s = H.step({}, dt.date(2026, 11, 3), closes, 10_300_000, 0.014, opens=opens, open_value=10_000_000)
+    n = round(10_000_000 / (6080 * 200))
+    assert s["state"]["symbol"] == "IC2612" and s["state"]["contracts"] == n and s["state"]["price"] == 6280.0
+    assert s["pnl"] == pytest.approx(-n * 200 * 200)
+    assert s["cost"] == pytest.approx(n * 6080 * 200 * (C.FUT_FEE + C.FUT_SLIPPAGE))
+    assert s["events"] == [{"action": "open", "symbol": "IC2612", "contracts": n, "price": 6080.0}]
+    later = H.step(s["state"], dt.date(2026, 11, 4), closes, 10_300_000, 0.014, opens=opens, open_value=10_000_000)
+    assert later["pnl"] == 0 and later["events"] == []                # 已有空头时不再按开盘价建仓
+
+
+def test_first_day_hedge_in_ledger(tmp_path):
+    class Rally(FakeData):
+        def ic_opens(self, day):
+            return {k: v / 1.03 for k, v in self.ic_closes(day).items()}
+
+    data, book = Rally(), Book(tmp_path)
+    for d in [dt.date(2026, 11, 30), dt.date(2026, 12, 1)]:
+        run_day(book, data, d, strategy="benchmark", dry_run=True)
+    row = pd.read_csv(tmp_path / "nav.csv").iloc[0]
+    hedge = pd.read_csv(tmp_path / "hedge.csv").iloc[0]
+    close = data.ic_closes(dt.date(2026, 12, 1))[hedge["symbol"]]
+    assert hedge["action"] == "open" and hedge["price"] == pytest.approx(close / 1.03)
+    assert row["fut_pnl"] == pytest.approx(-hedge["contracts"] * (close - hedge["price"]) * 200, abs=0.01)
+    assert row["nav_hedged"] < row["nav_long"]                        # 市场涨，空头当天就亏
+
+
+def test_cffex_file_fetched_once(tmp_path, monkeypatch):
+    from paper import data as D
+    import arbitrage as basis
+    raw = ("合约代码,今开盘,最高价,最低价,成交量,成交金额,持仓量,持仓变化,今收盘,今结算,前结算,涨跌1,涨跌2,Delta\n"
+           "IC2612 ,6515.2,6710,6500,100,1,1000,1,6703.6,6700,6600,1,1,--\n"
+           "IF2612 ,4500,4510,4490,100,1,1000,1,4505,4504,4490,1,1,--\n").encode("gbk")
+    calls = []
+
+    class Resp:
+        status_code, content = 200, raw
+
+    monkeypatch.setattr(basis, "_http_get", lambda url: calls.append(url) or Resp())
+    d = object.__new__(D.AkshareData)
+    day = dt.date(2026, 11, 5)
+    assert d.ic_closes(day) == {"IC2612": 6703.6} and d.ic_opens(day) == {"IC2612": 6515.2}
+    assert len(calls) == 1
+
 
 def test_end_to_end(tmp_path):
     data, book = FakeData(), Book(tmp_path)

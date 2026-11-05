@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import io
 import os
 import sys
 import time
@@ -256,22 +257,39 @@ class AkshareData:
         return pd.Series(pd.to_numeric(df["利率"], errors="coerce").values / 100,
                          index=pd.to_datetime(df["报告日"]).dt.date).sort_index().dropna()
 
+    def _cffex_file(self, day: dt.date) -> bytes:
+        """中金所当日行情文件。同一次运行只取一次。"""
+        memo = self.__dict__.setdefault("_cffex", {})
+        if day not in memo:
+            import arbitrage as basis
+            d = f"{day:%Y%m%d}"
+            url = f"http://www.cffex.com.cn/sj/hqsj/rtj/{d[:6]}/{d[6:]}/{d}_1.csv"
+
+            def get():
+                r = basis._http_get(url)
+                if r is None or r.status_code >= 500:
+                    raise ConnectionError(f"HTTP {getattr(r, 'status_code', '无响应')}")
+                return r
+
+            r = _retry(get, f"中金所 {d} 行情")      # 网络失败重试；下面才是真的还没发布
+            if r.status_code == 404 or not r.content or b"<html" in r.content[:200].lower():
+                from .book import StaleData
+                raise StaleData(f"中金所 {d} 的行情还没有发布，请稍后再跑")
+            memo[day] = r.content
+        return memo[day]
+
     def ic_closes(self, day: dt.date) -> dict[str, float]:
         """当日 IC 各合约收盘价，取自中金所每日行情（复用期现套利脚本的解析）。"""
         import arbitrage as basis
-        d = f"{day:%Y%m%d}"
-        url = f"http://www.cffex.com.cn/sj/hqsj/rtj/{d[:6]}/{d[6:]}/{d}_1.csv"
-
-        def get():
-            r = basis._http_get(url)
-            if r is None or r.status_code >= 500:
-                raise ConnectionError(f"HTTP {getattr(r, 'status_code', '无响应')}")
-            return r
-
-        r = _retry(get, f"中金所 {d} 行情")      # 网络失败重试；下面才是真的还没发布
-        if r.status_code == 404 or not r.content or b"<html" in r.content[:200].lower():
-            from .book import StaleData
-            raise StaleData(f"中金所 {d} 的行情还没有发布，请稍后再跑")
-        df = basis._parse_cffex_csv(r.content, d)
+        df = basis._parse_cffex_csv(self._cffex_file(day), f"{day:%Y%m%d}")
         df = df[df["variety"] == C.HEDGE_VARIETY].dropna(subset=["close"])
         return dict(zip(df["symbol"], df["close"].astype(float)))
+
+    def ic_opens(self, day: dt.date) -> dict[str, float]:
+        """当日 IC 各合约开盘价（日文件第 2 列，期现套利脚本的解析没有取这一列）。"""
+        df = pd.read_csv(io.StringIO(self._cffex_file(day).decode("gbk", errors="replace"))).iloc[:, [0, 1]]
+        df.columns = ["symbol", "open"]
+        df["symbol"] = df["symbol"].astype(str).str.strip()
+        df["open"] = pd.to_numeric(df["open"], errors="coerce")
+        df = df[df["symbol"].str.fullmatch(C.HEDGE_VARIETY + r"\d{4}")].dropna(subset=["open"])
+        return dict(zip(df["symbol"], df["open"].astype(float)))

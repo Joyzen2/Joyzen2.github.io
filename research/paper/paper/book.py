@@ -138,6 +138,7 @@ def run_day(book: Book, data, day: dt.date, strategy: str = "icir", force_signal
 
     # 2. 执行日：开盘按上一期信号调仓
     trades = []
+    open_value = 0.0
     if pending and target:
         st = data.st_codes()
         quotes = {}
@@ -164,6 +165,7 @@ def run_day(book: Book, data, day: dt.date, strategy: str = "icir", force_signal
             px_prev = _asof(data.index_close(C.INDEX, prev - dt.timedelta(days=10), prev), prev)
             acct["bench_start"] = tr_prev * data.index_open(C.INDEX, day) / px_prev
             acct["started"] = day.isoformat()
+            open_value = sum(s * (quotes[c].open or 0.0) for c, s in acct["holdings"].items())   # 空头也在开盘建立
         held = set(acct["holdings"])
         acct["factors"] = {c: f for c, f in acct["factors"].items() if c in held}
 
@@ -176,7 +178,8 @@ def run_day(book: Book, data, day: dt.date, strategy: str = "icir", force_signal
             raise StaleData(f"{C.BENCHMARK} 的 {day} 收盘还没有发布（全收益指数通常晚于价格指数），请稍后再跑")
         level = float(bench[day])
         rate = _asof(data.shibor_3m(), prev) or 0.0
-        h = H.step(acct["hedge"], day, data.ic_closes(day), long_value, rate)
+        h = H.step(acct["hedge"], day, data.ic_closes(day), long_value, rate,
+                   opens=data.ic_opens(day) if open_value else None, open_value=open_value)
         acct["hedge"] = h["state"]
         acct["hedge_cum"] += h["pnl"] - h["cost"] - h["funding"]
         rows["hedge.csv"] = [{"date": day.isoformat(), **e} for e in h["events"]]

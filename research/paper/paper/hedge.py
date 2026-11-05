@@ -27,8 +27,12 @@ def fee(notional: float) -> float:
     return abs(notional) * (C.FUT_FEE + C.FUT_SLIPPAGE)
 
 
-def step(state: dict, day: dt.date, closes: dict[str, float], long_value: float, rate: float) -> dict:
+def step(state: dict, day: dt.date, closes: dict[str, float], long_value: float, rate: float,
+         opens: dict[str, float] | None = None, open_value: float = 0.0) -> dict:
     """收盘后更新一天的对冲。state: {"symbol", "contracts", "price", "last_day"}。
+
+    opens、open_value 只在建仓当天给：空头和多头一样在开盘建立，按开盘价成交，手数按开盘时的多头市值算，
+    否则当天开盘到收盘的市场涨跌没有对冲，会一直留在对冲后净值里。
 
     返回当日期货盈亏、成本、保证金资金成本，以及更新后的 state。
     """
@@ -39,6 +43,12 @@ def step(state: dict, day: dt.date, closes: dict[str, float], long_value: float,
         pnl = -n * (closes[sym] - last_price) * C.HEDGE_MULTIPLIER
     target_sym = pick_contract(day, sorted(closes))
     events = []
+    if opens and not n and opens.get(target_sym):
+        sym, entry = target_sym, opens[target_sym]
+        n = round(open_value * C.HEDGE_RATIO / (entry * C.HEDGE_MULTIPLIER))
+        pnl = -n * (closes[sym] - entry) * C.HEDGE_MULTIPLIER
+        cost += fee(n * entry * C.HEDGE_MULTIPLIER)
+        events.append({"action": "open", "symbol": sym, "contracts": n, "price": entry})
     if sym and target_sym and target_sym != sym and n:
         # 换月：平旧开新
         cost += fee(n * closes[sym] * C.HEDGE_MULTIPLIER)

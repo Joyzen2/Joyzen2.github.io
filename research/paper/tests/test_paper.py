@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from paper import config as C  # noqa: E402
 from paper import hedge as H  # noqa: E402
-from paper.book import Book, StaleData, is_signal_day, run_day  # noqa: E402
+from paper.book import Book, StaleData, days_to_catch_up, is_signal_day, run_day  # noqa: E402
 from paper.broker import Quote, rebalance  # noqa: E402
 from paper.rules import buy_shares, limit_prices, sell_shares  # noqa: E402
 
@@ -202,6 +202,23 @@ def test_missed_day_refused(tmp_path):
     assert {p.name: p.read_bytes() for p in tmp_path.glob("*.*")} == before
     for d in (dt.date(2026, 12, 1), dt.date(2026, 12, 2)):
         assert run_day(book, data, d, strategy="benchmark", dry_run=True)["day"] == d.isoformat()
+
+
+def test_catch_up_days(tmp_path, monkeypatch):
+    from paper import clock
+    class Cal:
+        def calendar(self):
+            return [dt.date(2026, 11, d) for d in (2, 3, 4, 5, 6, 9, 10)]
+    book = Book(tmp_path / "s")
+    monkeypatch.setattr(clock, "now", lambda: dt.datetime(2026, 11, 9, 21, 30, tzinfo=clock.TZ))
+    assert days_to_catch_up(book, Cal(), dt.date(2026, 11, 9)) == [dt.date(2026, 11, 9)]      # 空账本只记今天
+    book.acct["last_day"] = "2026-11-05"
+    assert days_to_catch_up(book, Cal(), dt.date(2026, 11, 9)) == [dt.date(2026, 11, 6), dt.date(2026, 11, 9)]
+    monkeypatch.setattr(clock, "now", lambda: dt.datetime(2026, 11, 9, 9, 0, tzinfo=clock.TZ))
+    assert days_to_catch_up(book, Cal(), dt.date(2026, 11, 9)) == [dt.date(2026, 11, 6)]      # 今天没收盘，不算今天
+    book.acct["last_day"] = "2026-11-09"
+    monkeypatch.setattr(clock, "now", lambda: dt.datetime(2026, 11, 9, 23, 30, tzinfo=clock.TZ))
+    assert days_to_catch_up(book, Cal(), dt.date(2026, 11, 9)) == []                          # 记过了，什么也不做
 
 
 def test_day_past_the_calendar_is_stale(tmp_path):

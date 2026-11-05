@@ -7,6 +7,7 @@
     uv run research/paper/run.py daily                         正式记录，写入 research/paper/state/
     uv run research/paper/run.py daily --dry-run --signal benchmark --force-signal
                                                                试运行，写入 research/paper/state-dryrun/（不进仓库）
+    uv run research/paper/run.py daily --catch-up              从账本最后一天补到今天，定时任务用
     uv run research/paper/run.py export                        只导出网站数据
 
 正式信号（--signal icir，默认）需要先把原研究项目的模块移植到 research/paper/enhance/。
@@ -24,7 +25,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from paper import config as C  # noqa: E402
-from paper.book import Book, StaleData, run_day  # noqa: E402
+from paper import clock  # noqa: E402
+from paper.book import Book, StaleData, days_to_catch_up, run_day  # noqa: E402
 
 
 def _read_csv(path: Path) -> list[dict]:
@@ -69,6 +71,7 @@ def main() -> None:
     d.add_argument("--dry-run", action="store_true", help="写入 state-dryrun/，不影响正式记录")
     d.add_argument("--force-signal", action="store_true", help="试运行时把这一天当作月末信号日")
     d.add_argument("--offline", action="store_true", help="只用本机缓存")
+    d.add_argument("--catch-up", action="store_true", help="从账本最后一天补到今天；今天还没收盘就只补到上一个交易日")
     sub.add_parser("export", help="只导出网站数据")
     args = ap.parse_args()
 
@@ -79,18 +82,24 @@ def main() -> None:
         sys.exit("占位信号和强制信号日只能用于试运行（加 --dry-run）")
     from paper.data import AkshareData
     state = C.ROOT / "state-dryrun" if args.dry_run else C.STATE
-    day = dt.date.fromisoformat(args.date) if args.date else dt.date.today()
+    today = clock.today()
+    data = AkshareData(offline=args.offline)
     try:
-        res = run_day(Book(state), AkshareData(offline=args.offline), day, strategy=args.signal,
-                      force_signal=args.force_signal, dry_run=args.dry_run)
+        days = days_to_catch_up(Book(state), data, today) if args.catch_up else [dt.date.fromisoformat(args.date) if args.date else today]
+        results = []
+        for day in days:                 # 每天都重新读账本：前一天写进去的 pending、持仓，后一天要用
+            results.append(run_day(Book(state), data, day, strategy=args.signal,
+                                   force_signal=args.force_signal, dry_run=args.dry_run))
+            print(json.dumps(results[-1], ensure_ascii=False, indent=1, default=str))
     except StaleData as exc:
         sys.exit(f"今天的账没有记：{exc}。没有写入任何文件，稍后重跑即可。")
     except RuntimeError as exc:          # 取数失败（网络、限流）；加 PAPER_DEBUG=1 可看完整 traceback
         if os.environ.get("PAPER_DEBUG"):
             raise
         sys.exit(f"今天的账没有记：{exc}。没有写入任何文件，网络恢复后重跑即可。")
-    print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
-    if not args.dry_run:
+    if args.catch_up and not days:
+        print("没有要补的交易日")
+    if not args.dry_run and results:
         export(C.STATE, C.SITE_JSON)
 
 

@@ -78,6 +78,17 @@ def is_signal_day(day: dt.date, cal: list[dt.date]) -> bool:
     return not later or later[0].month != day.month       # 日历只到年底、明年的还没公布时，最后一天也是月末
 
 
+def days_to_catch_up(book: Book, data, today: dt.date) -> list[dt.date]:
+    """账本最后一天之后、到今天为止的交易日，按日期排好；今天还没收盘就不算今天。账本是空的就只记今天。"""
+    cal = data.calendar()
+    last = dt.date.fromisoformat(book.acct["last_day"]) if book.acct["last_day"] else None
+    if last is None:
+        days = [today] if today in cal else []
+    else:
+        days = [d for d in cal if last < d <= today]
+    return [d for d in days if d < today or clock.closed(d)]
+
+
 def run_day(book: Book, data, day: dt.date, strategy: str = "icir", force_signal: bool = False,
             dry_run: bool = False) -> dict:
     if day >= clock.today() and not clock.closed(day):

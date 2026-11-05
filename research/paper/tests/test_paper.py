@@ -249,10 +249,10 @@ def test_index_close_cache(tmp_path, monkeypatch):
     a = d.index_close("H00905", dt.date(2026, 11, 2), dt.date(2026, 11, 4))
     b = d.index_close("H00905", dt.date(2026, 11, 2), dt.date(2026, 11, 4))
     assert len(calls) == 1 and list(a.index) == list(b.index) == [dt.date(2026, 11, d) for d in (2, 3, 4)]
-    d2 = object.__new__(D.AkshareData)                      # 第二天新开一次运行：只补取缺的日期
+    d2 = object.__new__(D.AkshareData)                      # 第二天新开一次运行：只补取缺的部分
     d2.offline, d2.ak, d2._index, d2._asked = False, StubAk(), {}, set()
     c = d2.index_close("H00905", dt.date(2026, 11, 2), dt.date(2026, 11, 5))
-    assert calls[-1] == ("20261105", "20261105") and len(c) == 4
+    assert calls[-1] == ("20261104", "20261105") and len(c) == 4      # 从缓存最后一天起补取
 
 
 def test_refuses_before_close(tmp_path, monkeypatch):
@@ -365,3 +365,25 @@ def test_panel_marks_codes_without_factor():
     pn = Panel(WithValues(), ["600000", "600001", "600002"], dt.date(2026, 11, 30), 40)
     assert pn.no_factor == ["600001"]
     assert pn.value_last["600000"] == pd.Timestamp("2027-01-29")
+
+
+def test_index_not_yet_published_is_stale_not_throttled(tmp_path, monkeypatch):
+    """缓存到前一天、当天还没发布：只请求一次，报"还没有发布"，不当成限流重试。"""
+    calls = []
+
+    class Unpublished:
+        def stock_zh_index_hist_csindex(self, symbol, start_date, end_date):
+            calls.append((start_date, end_date))
+            days = [d for d in pd.bdate_range(start_date, end_date) if d < pd.Timestamp("2026-11-05")]
+            if not days:                                    # 空表：akshare 在这里会报 Length mismatch
+                raise ValueError("Length mismatch: Expected axis has 0 elements")
+            return pd.DataFrame({"日期": days, "收盘": 100.0, "开盘": 99.0})
+
+    d = _stub_data(tmp_path, monkeypatch, Unpublished())
+    d.index_close("H00905", dt.date(2026, 11, 2), dt.date(2026, 11, 4))      # 缓存到 11-04
+    d2 = _stub_data(tmp_path, monkeypatch, Unpublished())
+    s = d2.index_close("H00905", dt.date(2026, 11, 4), dt.date(2026, 11, 5))
+    assert dt.date(2026, 11, 5) not in s.index and calls[-1] == ("20261104", "20261105") and len(calls) == 2
+    with pytest.raises(StaleData, match="还没有发布"):
+        d2.index_open("000905", dt.date(2026, 11, 5))
+    assert len(calls) == 3

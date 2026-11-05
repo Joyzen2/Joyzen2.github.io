@@ -107,6 +107,9 @@ def monthly_target(day: dt.date, data, holdings: dict[str, float], dry_run: bool
     hist = ind_mod.history(data)
 
     ix = data.index_close("000985", pn.days[0].date(), day)
+    if day not in ix.index:                       # 下面会前向填充，没发布时不检查就会静默用前一天
+        from paper.book import StaleData
+        raise StaleData(f"中证全指（000985）的 {day} 收盘还没有发布，请稍后再跑")
     ix.index = pd.to_datetime(list(ix.index))
     mkt = ix.reindex(pn.days).ffill().pct_change()
 

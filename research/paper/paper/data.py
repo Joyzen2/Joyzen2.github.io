@@ -102,12 +102,13 @@ class AkshareData:
                                    if path.exists() else pd.Series(dtype="float64"))
         have = self._index[symbol]
         if have.empty or have.index.min().date() > start:
-            need_from = start
+            need_from, wanted = start, True
         else:
             last = have.index.max().date()
-            # 最后一行若是在当天收盘前写入的，可能是盘中值，重取这一天
-            need_from = last if not clock.written_after_close(path, last) else last + dt.timedelta(days=1)
-        if not self.offline and need_from <= end and (symbol, end) not in self._asked:
+            # 缺日期，或最后一行是收盘前写入的（可能是盘中值），才请求。请求总是从缓存最后一天起：
+            # 范围里一定有已发布的行，当天还没发布时返回的就是"缺当天"，而不是空表（akshare 在空表上会报错）
+            need_from, wanted = last, last < end or not clock.written_after_close(path, last)
+        if not self.offline and wanted and (symbol, end) not in self._asked:
             self._asked.add((symbol, end))
             df = self._csindex(symbol, need_from, end)
             if df is not None and len(df):
@@ -119,7 +120,11 @@ class AkshareData:
         return pd.Series(out.values, index=out.index.date, name=symbol)
 
     def index_open(self, symbol: str, day: dt.date) -> float:
-        df = self._csindex(symbol, day, day)
+        df = self._csindex(symbol, day - dt.timedelta(days=10), day)   # 范围里带上前几天，避免空表
+        df = df[pd.to_datetime(df["日期"]).dt.date == day]
+        if df.empty:
+            from .book import StaleData
+            raise StaleData(f"{symbol} 的 {day} 行情还没有发布，请稍后再跑")
         return float(pd.to_numeric(df["开盘"], errors="coerce").iloc[-1])
 
     # ── 个股 ──

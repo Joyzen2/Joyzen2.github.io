@@ -45,6 +45,9 @@ def _cache(name: str) -> "os.PathLike":
     return path
 
 
+NO_FACTOR = "sina hfq factor not available"   # akshare 在新浪没有这只股票的因子时抛出的消息
+
+
 def sina_symbol(code: str) -> str:
     return ("sh" if code.startswith(("6", "9")) else "sz") + code
 
@@ -62,11 +65,14 @@ class AkshareData:
 
     # ── 日历、成分、指数 ──
     def calendar(self) -> list[dt.date]:
+        if getattr(self, "_cal", None):
+            return self._cal
         path = _cache("calendar.csv")
         if not self.offline or not path.exists():
             df = _retry(self.ak.tool_trade_date_hist_sina, "交易日历")
             df.to_csv(path, index=False)
-        return [d.date() for d in pd.to_datetime(pd.read_csv(path)["trade_date"])]
+        self._cal = [d.date() for d in pd.to_datetime(pd.read_csv(path)["trade_date"])]
+        return self._cal
 
     def members(self, day: dt.date) -> pd.DataFrame:
         """中证500 最新成分与权重（中证官网只给最新一期）。每天存一份快照，以后可以攒出历史序列。"""
@@ -149,21 +155,31 @@ class AkshareData:
         if refresh and not self.offline and not fresh:
             try:
                 df = _retry(lambda: self.ak.stock_zh_a_daily(symbol=sina_symbol(code), adjust="hfq-factor"),
-                            f"{code} 复权因子", tries=2)
-                df.to_csv(path, index=False)
-            except RuntimeError:
-                if not path.exists():          # 新浪不提供部分股票（如 689009）的因子，返回空序列由调用方处理
-                    print(f"  {code} 没有复权因子", flush=True)
+                            f"{code} 复权因子")
+            except RuntimeError as exc:
+                # 只有新浪明确说没有（如 689009）才当作没有因子；限流、网络失败必须报错，
+                # 否则除权日会静默用旧因子，当天净值记错
+                if NO_FACTOR not in str(exc.__cause__ or ""):
+                    raise
+                print(f"  {code} 新浪不提供复权因子", flush=True)
+                df = pd.DataFrame({"date": [], "hfq_factor": []})
+            df.to_csv(path, index=False)
             time.sleep(0.3)
         df = pd.read_csv(path) if path.exists() else pd.DataFrame({"date": [], "hfq_factor": []})
         out = pd.Series(pd.to_numeric(df["hfq_factor"]).values, index=pd.to_datetime(df["date"]).dt.date).sort_index()
         self._factor_memo[code] = out
         return out
 
+    def last_session(self) -> dt.date:
+        """今天及以前最近的一个交易日。"""
+        return max(d for d in self.calendar() if d <= clock.today())
+
     def value_history(self, code: str) -> pd.DataFrame:
         """日频总市值、流通市值（元）、总股本（股），东财，2018 年起。信号日才用，当天只取一次。"""
         path = _cache(f"value/{code}.csv")
-        fresh = clock.written_after_close(path, clock.today())   # 收盘前取的没有当天的行
+        # 今天收盘后取过、而且已经有最近一个交易日的行，才不再取（东财估值表当天那一行可能晚于收盘发布）
+        fresh = clock.written_after_close(path, clock.today()) and \
+            pd.read_csv(path, usecols=["date"])["date"].max() >= self.last_session().isoformat()
         if not self.offline and not fresh:
             df = _retry(lambda: self.ak.stock_value_em(symbol=code), f"{code} 估值")
             out = pd.DataFrame({"date": pd.to_datetime(df["数据日期"]), "total_mcap": pd.to_numeric(df["总市值"], errors="coerce"),

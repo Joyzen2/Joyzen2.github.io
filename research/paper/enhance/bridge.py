@@ -99,6 +99,11 @@ def monthly_target(day: dt.date, data, holdings: dict[str, float], dry_run: bool
     if cover < MIN_COVERAGE:
         from paper.book import StaleData
         raise StaleData(f"当月成分股里只有 {cover:.0%} 有 {day} 的日线，低于 {MIN_COVERAGE:.0%}，行情可能还没发布齐")
+    # 市值同理：面板里会前向填充，只发布到前一天时不报错，所以看估值表本身的最后日期
+    vcover = float(np.mean([(pn.value_last.get(c) is not None and pn.value_last[c] >= t) for c in members["code"]]))
+    if vcover < MIN_COVERAGE:
+        from paper.book import StaleData
+        raise StaleData(f"当月成分股里只有 {vcover:.0%} 有 {day} 的市值，低于 {MIN_COVERAGE:.0%}，东财估值表可能还没更新")
     hist = ind_mod.history(data)
 
     ix = data.index_close("000985", pn.days[0].date(), day)

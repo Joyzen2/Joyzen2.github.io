@@ -28,6 +28,7 @@ class Panel:
         self.days = pd.DatetimeIndex(days)
         self.missing: list[str] = []
         self.no_factor: list[str] = []
+        self.value_last: dict[str, pd.Timestamp | None] = {}    # 每只股票估值表的最后日期（ffill 之前）
         fields: dict[str, dict[str, pd.Series]] = {k: {} for k in (
             "open", "high", "low", "close", "raw_close", "amount", "turnover", "float_mcap", "total_mcap", "total_shares", "limit_up")}
         for c in sorted(set(codes)):
@@ -36,10 +37,8 @@ class Panel:
                 self.missing.append(c)
                 continue
             b = b[pd.to_numeric(b["volume"], errors="coerce") > 0].set_index("date").sort_index()
-            try:
-                f = data.hfq_factor(c)
-            except Exception:                        # 新浪不提供个别代码的因子文件：当作没有除权，并记下来
-                f = pd.Series(dtype="float64")
+            f = data.hfq_factor(c)                   # 临时失败会抛错，不在这里吞掉
+            if f.empty:                              # 新浪明确不提供：当作没有除权，并记下来（不进候选）
                 self.no_factor.append(c)
             if len(f):
                 fac = pd.Series(f.values, index=pd.to_datetime(list(f.index))).sort_index()
@@ -55,6 +54,7 @@ class Panel:
             hit = (adj / adj.shift(1) - 1) >= _limit_pct(c) - LIMIT_TOL
             fields["limit_up"][c] = (hit & (pd.to_numeric(b["close"]) == pd.to_numeric(b["high"]))).astype("float64")
             v = data.value_history(c)
+            self.value_last[c] = v.index.max() if v is not None and len(v) else None
             if v is not None and len(v):
                 v = v.reindex(v.index.union(b.index)).ffill().reindex(b.index)
                 fields["float_mcap"][c] = v["float_mcap"]

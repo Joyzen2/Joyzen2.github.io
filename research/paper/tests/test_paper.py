@@ -300,3 +300,68 @@ def test_intraday_bars_are_refetched_after_close(tmp_path, monkeypatch):
     assert float(evening["close"].iloc[-1]) == 1452.5 and float(evening["amount"].iloc[-1]) == 9.8e8
     again = run_at(21, 0)
     assert len(calls) == 2 and float(again["close"].iloc[-1]) == 1452.5   # 收盘后取过的不再重复请求
+
+
+def _stub_data(tmp_path, monkeypatch, ak):
+    from paper import data as D
+    monkeypatch.setattr(C, "CACHE", tmp_path)
+    monkeypatch.setattr(D.time, "sleep", lambda s: None)
+    d = object.__new__(D.AkshareData)
+    d.offline, d.ak, d._index, d._asked, d._factor_memo = False, ak, {}, set(), {}
+    return d
+
+
+def test_hfq_factor_missing_vs_failing(tmp_path, monkeypatch):
+    """新浪明确没有 → 空序列；临时失败（即使本机有副本）→ 报错，当天的账不记。"""
+    from paper import data as D
+
+    class Missing:
+        def stock_zh_a_daily(self, symbol, adjust):
+            raise ValueError(D.NO_FACTOR)
+
+    class Flaky:
+        def stock_zh_a_daily(self, symbol, adjust):
+            raise ValueError("Expecting value: line 1 column 1 (char 0)")   # JSON 解析错误也是 ValueError
+
+    assert _stub_data(tmp_path, monkeypatch, Missing()).hfq_factor("689009").empty
+    path = tmp_path / "factors" / "600000.csv"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame({"date": ["2020-01-02"], "hfq_factor": [1.0]}).to_csv(path, index=False)
+    import os
+    os.utime(path, (0, 0))                                   # 旧副本
+    with pytest.raises(RuntimeError, match="复权因子"):
+        _stub_data(tmp_path, monkeypatch, Flaky()).hfq_factor("600000")
+
+
+class FactorOutage(FakeData):
+    """除权日新浪临时失败。"""
+    def hfq_factor(self, code, refresh=True):
+        raise RuntimeError(f"{code} 复权因子 取数失败：ConnectionError")
+
+
+def test_factor_outage_writes_nothing(tmp_path):
+    data = FakeData()
+    days = [d for d in data.cal if dt.date(2026, 11, 30) <= d <= dt.date(2026, 12, 14)]
+    for d in days:
+        run_day(Book(tmp_path), data, d, strategy="benchmark", dry_run=True)
+    before = {p.name: p.read_bytes() for p in tmp_path.glob("*.*")}
+    with pytest.raises(RuntimeError):
+        run_day(Book(tmp_path), FactorOutage(), data.ex[1], strategy="benchmark", dry_run=True)
+    assert {p.name: p.read_bytes() for p in tmp_path.glob("*.*")} == before
+
+
+def test_panel_marks_codes_without_factor():
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "enhance"))
+    from panel import Panel
+
+    class WithValues(FakeData):
+        def hfq_factor(self, code, refresh=True):
+            return pd.Series(dtype="float64") if code == "600001" else super().hfq_factor(code)
+
+        def value_history(self, code):
+            idx = pd.to_datetime(self.cal)
+            return pd.DataFrame({"total_mcap": 1e10, "float_mcap": 8e9, "total_shares": 1e9}, index=idx)
+
+    pn = Panel(WithValues(), ["600000", "600001", "600002"], dt.date(2026, 11, 30), 40)
+    assert pn.no_factor == ["600001"]
+    assert pn.value_last["600000"] == pd.Timestamp("2027-01-29")

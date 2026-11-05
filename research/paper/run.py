@@ -1,8 +1,9 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["akshare>=1.17", "pandas>=2.2", "requests>=2.31", "cvxpy>=1.5", "clarabel>=0.9"]
+# dependencies = ["akshare==1.20.27", "pandas==3.1.1", "requests==2.34.2", "cvxpy==1.9.3", "clarabel==0.11.1"]
 # ///
-"""中证500 指数增强模拟实盘：每个交易日收盘后运行一次。
+"""中证500 指数增强模拟实盘：每个交易日收盘后运行一次。依赖版本写死并锁定（run.py.lock）：akshare 改版常常改接口，
+换版本要先把整条链路跑通再改这里。
 
     uv run research/paper/run.py daily                         正式记录，写入 research/paper/state/
     uv run research/paper/run.py daily --dry-run --signal benchmark --force-signal

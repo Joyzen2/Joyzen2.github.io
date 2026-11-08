@@ -630,7 +630,8 @@ const CircularGallery = ({
             entry.cover.replaceChildren();
             if (card.item.cardTitle) {
               const image = document.createElement('img');
-              image.src = card.item.image;
+              // A card whose emblem is placed separately shows its background alone here.
+              image.src = card.item.cover || card.item.image;
               image.alt = '';
               image.draggable = false;
               image.className = 'gallery-card-image';
@@ -891,7 +892,8 @@ const CircularGallery = ({
     };
 
     const onPointerDown = event => {
-      if (event.button !== 0 || event.target.closest('[data-gallery-close]')) return;
+      // The close button and the opened card's evidence link act for themselves.
+      if (event.button !== 0 || event.target.closest('[data-gallery-close], a')) return;
       const p = point(event);
       state.drag = {
         id: event.pointerId,
@@ -1136,13 +1138,14 @@ const CircularGallery = ({
       style={{ color: textColor, ...style }}
       role="region"
       aria-roledescription="carousel"
-      aria-label="五项研究与获奖成果"
+      aria-label={`${count} 项研究与获奖成果`}
       {...rest}
     >
       <canvas ref={canvasRef} className={CLASSES.canvas} aria-hidden="true" />
       <div ref={labelsRef} className={CLASSES.labels} aria-hidden="true" />
       <div ref={captionRef} className={CLASSES.caption} aria-hidden={!open}>
         {current?.description && <p className={CLASSES.captionText}>{current.description}</p>}
+        {current?.href && <a className="gallery-evidence" href={current.href} target="_blank" rel="noreferrer" tabIndex={open ? 0 : -1}>{current.linkText || '查看'}<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg></a>}
       </div>
       <button
         type="button"

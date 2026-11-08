@@ -3,18 +3,18 @@
 .gallery-pause{font:inherit;color:#cbd8e6;background:transparent;border:0;border-bottom:1px solid #526478;padding:10px 0;cursor:pointer;min-height:44px}
 .gallery-pause:hover{color:#fff;border-color:#fff}
 .recognition-stage{height:clamp(430px,43vw,650px);width:100%;margin:0 auto;max-width:2100px}
-.recognition-index{display:flex;justify-content:space-between;gap:15px;border-bottom:1px solid #2b3b4c;padding-bottom:22px}
+.recognition-index{display:flex;justify-content:space-between;gap:15px}
 .recognition-index button{display:flex;align-items:baseline;gap:12px;font:inherit;font-size:13px;line-height:1.6;background:none;border:0;color:#a9bbcd;padding:12px 0;cursor:pointer;min-height:44px;transition:color .3s}
 .recognition-index button span{font-size:10px;font-variant-numeric:tabular-nums;color:#8399af}
 .recognition-index button[aria-pressed=true],.recognition-index button:hover{color:#fff}
 .recognition-index button[aria-pressed=true] span{color:#edf3fa}
-.recognition-detail{display:flex;justify-content:space-between;gap:30px;min-height:138px;padding-top:30px;align-items:start}
-.recognition-detail h3{font-size:clamp(23px,2.5vw,34px);font-weight:450;letter-spacing:-.025em;margin:0 0 12px}
-.recognition-detail p{font-size:13px;color:#bdcad8;max-width:65ch;line-height:1.8}
-.recognition-evidence{display:flex;align-items:flex-end;flex-direction:column;gap:15px;font-size:11px;color:#a9bbcd;line-height:1.8;text-align:right}
-.recognition-evidence .text-link{display:inline-flex;gap:12px;align-items:center}
 .recognition-art-note{font-size:10px;color:#91a4b9;margin-top:20px}
-.recognition-stage .circular-gallery-caption-text{opacity:1;line-height:1.7}
+/* Under an opened card the caption carries only its evidence link; the card already holds the words. */
+.recognition-stage .circular-gallery-caption-text{display:none}
+.recognition-stage .gallery-evidence{pointer-events:auto;display:inline-flex;align-items:center;gap:10px;min-height:44px;margin-top:6px;font:400 12px/1.6 var(--text);letter-spacing:.02em;color:#cbd8e6;border-bottom:1px solid #526478}
+.recognition-stage .gallery-evidence svg{width:14px;height:14px}
+.recognition-stage .gallery-evidence:hover{color:#fff;border-color:#fff}
+.recognition-stage .gallery-evidence:focus-visible{outline:2px solid #c0d7ee;outline-offset:5px}
 .recognition-stage button:focus-visible,.recognition-index button:focus-visible,.gallery-pause:focus-visible{outline:2px solid #c0d7ee;outline-offset:5px}
 .gallery-fallback{display:flex;overflow:auto;gap:24px;padding:30px;height:100%;scroll-snap-type:x mandatory}
 .gallery-fallback button{flex:0 0 280px;border:0;background:none;color:#edf3fa;scroll-snap-align:center;font:inherit}
@@ -28,7 +28,7 @@
 .creative-page .life-photo{filter:saturate(.65) brightness(.87)}
 .creative-page .life-frame figcaption{position:absolute;bottom:5%;left:13%;right:17%;z-index:1;line-height:1.7;color:#c3d2e0}
 .creative-page .profile-info{position:relative;z-index:2}
-@media(max-width:760px){.recognition-stage{height:440px}.recognition-index{flex-wrap:wrap;justify-content:flex-start;gap:0 22px}.recognition-index button{font-size:11px;gap:7px}.recognition-detail{flex-direction:column;gap:20px;min-height:240px}.recognition-evidence{align-items:flex-start;text-align:left}.creative-page .profile-layout{grid-template-columns:1fr;gap:0}.creative-page .life-frame{width:112%;max-width:520px;margin-left:-6%;margin-bottom:-18px}.creative-page .life-image-window{aspect-ratio:1/1.2}.creative-page .life-photo{object-position:50% 50%}.creative-page .life-frame figcaption{bottom:10%}.creative-page .profile-info{padding-top:10px}.recognition-toolbar{font-size:11px}.creative-page .recognition-section{padding-bottom:60px}}
+@media(max-width:760px){.recognition-stage{height:440px}.recognition-index{flex-wrap:wrap;justify-content:flex-start;gap:0 22px}.recognition-index button{font-size:11px;gap:7px}.creative-page .profile-layout{grid-template-columns:1fr;gap:0}.creative-page .life-frame{width:112%;max-width:520px;margin-left:-6%;margin-bottom:-18px}.creative-page .life-image-window{aspect-ratio:1/1.2}.creative-page .life-photo{object-position:50% 50%}.creative-page .life-frame figcaption{bottom:10%}.creative-page .profile-info{padding-top:10px}.recognition-toolbar{font-size:11px}.creative-page .recognition-section{padding-bottom:60px}}
 @media(prefers-reduced-motion:reduce){.recognition-index button{transition:none}}
 @media(min-width:761px){.creative-page .recognition-section{padding-top:84px}.creative-page .recognition-section .section-title-block{margin-bottom:24px}.recognition-stage{height:clamp(460px,34vw,550px)}}
 @media(min-width:761px){.creative-page .profile-layout{grid-template-columns:minmax(280px,480px) minmax(0,1fr);gap:clamp(24px,4vw,65px)}.creative-page .life-image-window{aspect-ratio:1000/1450}}
@@ -45,7 +45,6 @@
 .gallery-card-writing>span{font:400 9px/1.6 var(--text);color:#a9c0d7;margin-top:auto}
 .gallery-card-copy[data-open=true] .gallery-card-writing h3{font-size:27px}
 .gallery-card-copy[data-open=true] .gallery-card-writing p{font-size:13px;max-width:34em}
-.recognition-stage:has(.gallery-card-copy) .circular-gallery-caption{display:none}
 @media(max-width:760px){.gallery-card-writing{padding:20px 15px 12px;gap:7px}.gallery-card-writing h3{font-size:20px}.gallery-card-writing p{font-size:10px;line-height:1.6;-webkit-line-clamp:3}.gallery-card-writing>span{font-size:8px}.gallery-card-copy[data-open=true] .gallery-card-writing h3{font-size:23px}.gallery-card-copy[data-open=true] .gallery-card-writing p{font-size:11px}}
 .gallery-card-writing .gallery-card-points{display:none}
 .gallery-card-copy[data-open=true] .gallery-card-writing{inset:34% 0 0;padding-top:24px;gap:9px}
@@ -54,19 +53,19 @@
 .gallery-card-copy[data-open=true] .gallery-card-writing .gallery-card-points{font-size:11px;line-height:1.7}
 @media(max-width:760px){.gallery-card-copy[data-open=true] .gallery-card-writing .gallery-card-points{font-size:10px;line-height:1.55}}
 /* Reconstructed banner compositions: clean full-bleed imagery, live type. */
-.gallery-card-copy[data-art=conference] .gallery-card-image,.gallery-card-copy[data-art=competition] .gallery-card-image{inset:0;width:100%;height:58%;object-fit:cover;padding:0;border:0}
+.gallery-card-copy[data-art=conference] .gallery-card-image,.gallery-card-copy[data-art=competition] .gallery-card-image,.gallery-card-copy[data-art=medal] .gallery-card-image{inset:0;width:100%;height:58%;object-fit:cover;padding:0;border:0}
 .gallery-card-copy[data-art=conference] .gallery-card-image{object-position:50% 58%}
 .gallery-card-copy[data-art=competition] .gallery-card-image{object-position:40% 50%}
 .gallery-image-typography{position:absolute;inset:0 0 auto;height:49%;padding:18px 20px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;color:#fff;background:linear-gradient(180deg,rgba(3,14,30,.4),rgba(3,14,30,.04));white-space:normal}
 .gallery-image-typography strong{display:block;font:500 22px/1.35 var(--text);letter-spacing:-.02em;white-space:pre-line;text-wrap:balance}
 .gallery-image-typography>span{font:400 8px/1.5 var(--text);letter-spacing:.06em}
-.gallery-card-copy[data-art=conference] .gallery-card-writing,.gallery-card-copy[data-art=competition] .gallery-card-writing{inset:44% 0 0;padding-top:24px;background:linear-gradient(transparent 0%,#101c2a 20%,#101c2a 100%)}
-.gallery-card-copy[data-open=true][data-art=conference] .gallery-card-writing,.gallery-card-copy[data-open=true][data-art=competition] .gallery-card-writing{inset:39% 0 0;padding-top:24px;gap:8px}
+.gallery-card-copy[data-art=conference] .gallery-card-writing,.gallery-card-copy[data-art=competition] .gallery-card-writing,.gallery-card-copy[data-art=medal] .gallery-card-writing{inset:44% 0 0;padding-top:24px;background:linear-gradient(transparent 0%,#101c2a 20%,#101c2a 100%)}
+.gallery-card-copy[data-open=true][data-art=conference] .gallery-card-writing,.gallery-card-copy[data-open=true][data-art=competition] .gallery-card-writing,.gallery-card-copy[data-open=true][data-art=medal] .gallery-card-writing{inset:39% 0 0;padding-top:24px;gap:8px}
 .gallery-card-copy[data-open=true] .gallery-image-typography{height:44%;padding:18px 22px}
 .gallery-card-copy[data-open=true] .gallery-image-typography strong{font-size:24px}
 .gallery-card-copy[data-art=competition] .gallery-image-typography strong{font-size:18px;line-height:1.4}
 .gallery-card-copy[data-open=true][data-art=competition] .gallery-image-typography strong{font-size:21px}
-@media(max-width:760px){.gallery-image-typography{padding:15px}.gallery-image-typography strong{font-size:20px}.gallery-image-typography>span{font-size:7px}.gallery-card-copy[data-art=competition] .gallery-image-typography strong{font-size:16px}.gallery-card-copy[data-open=true] .gallery-image-typography{padding:15px 18px}.gallery-card-copy[data-open=true] .gallery-image-typography strong{font-size:21px}.gallery-card-copy[data-open=true][data-art=competition] .gallery-image-typography strong{font-size:18px}.gallery-card-copy[data-open=true][data-art=conference] .gallery-card-writing,.gallery-card-copy[data-open=true][data-art=competition] .gallery-card-writing{inset:38% 0 0;padding-top:18px;gap:6px}}
+@media(max-width:760px){.gallery-image-typography{padding:15px}.gallery-image-typography strong{font-size:20px}.gallery-image-typography>span{font-size:7px}.gallery-card-copy[data-art=competition] .gallery-image-typography strong{font-size:16px}.gallery-card-copy[data-open=true] .gallery-image-typography{padding:15px 18px}.gallery-card-copy[data-open=true] .gallery-image-typography strong{font-size:21px}.gallery-card-copy[data-open=true][data-art=competition] .gallery-image-typography strong{font-size:18px}.gallery-card-copy[data-open=true][data-art=conference] .gallery-card-writing,.gallery-card-copy[data-open=true][data-art=competition] .gallery-card-writing,.gallery-card-copy[data-open=true][data-art=medal] .gallery-card-writing{inset:38% 0 0;padding-top:18px;gap:6px}}
 .gallery-card-copy[data-art=portrait] .gallery-card-image{object-position:70% 35%}
 .gallery-card-copy[data-art=campus] .gallery-card-image{object-position:50% 40%}
 .gallery-card-emblem{position:absolute;left:0;top:4px;width:122px;height:auto;object-fit:contain;pointer-events:none}
@@ -78,3 +77,7 @@
 @media(max-width:760px){.gallery-card-emblem{width:98px;top:8px}.gallery-card-copy[data-art=competition] .gallery-image-typography{padding-left:101px;padding-right:11px}.gallery-card-copy[data-art=competition] .gallery-image-typography strong{font-size:12px;line-height:1.4}.gallery-card-copy[data-open=true] .gallery-card-emblem{width:134px;top:2px}.gallery-card-copy[data-open=true][data-art=competition] .gallery-image-typography{padding-left:135px;padding-right:15px}.gallery-card-copy[data-open=true][data-art=competition] .gallery-image-typography strong{font-size:16px}}
 
 .gallery-image-typography:has(>span:only-child){justify-content:flex-end}
+/* The medal is sized by the card's height, so it clears the writing both closed and open. */
+.gallery-card-copy[data-art=medal] .gallery-card-image{object-position:50% 0}
+.gallery-card-copy[data-art=medal] .gallery-card-emblem{left:50%;top:4%;z-index:1;width:auto;height:50%;transform:translateX(-50%)}
+.gallery-card-copy[data-open=true][data-art=medal] .gallery-card-emblem{top:1%;width:auto;height:42%}

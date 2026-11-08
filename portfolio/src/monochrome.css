@@ -10,7 +10,7 @@ html:has(.creative-page){background:#000;scrollbar-color:#666 #000}
 .creative-page .gallery-card-copy[data-art=conference] .gallery-card-writing,.creative-page .gallery-card-copy[data-art=competition] .gallery-card-writing{background:linear-gradient(transparent,#111 20%,#111)}
 .creative-page .gallery-image-typography{background:linear-gradient(180deg,rgba(0,0,0,.4),rgba(0,0,0,.04))}
 .creative-page .gallery-card-writing p,.creative-page .profile-intro,.creative-page .journey-back-description{color:#c9c9c9}
-.creative-page .gallery-card-writing>span,.creative-page .gallery-card-writing .gallery-card-points,.creative-page .journey-date,.creative-page .journey-type,.creative-page .journey-return,.creative-page .research-carousel-intro p,.creative-page .research-project-tabs button,.creative-page .recognition-index button,.creative-page .recognition-evidence{color:#b9b9b9}
+.creative-page .gallery-card-writing>span,.creative-page .gallery-card-writing .gallery-card-points,.creative-page .journey-date,.creative-page .journey-type,.creative-page .journey-return,.creative-page .research-carousel-intro p,.creative-page .research-project-tabs button,.creative-page .recognition-index button{color:#b9b9b9}
 .creative-page .research-project-tabs button[aria-pressed=true],.creative-page .recognition-index button[aria-pressed=true]{color:#fff}
 .creative-page .profile-facts>div,.creative-page .profile-numbers,.creative-page .profile-current,.creative-page .project-detail,.creative-page .research-project-tabs,.creative-page .recognition-index{border-color:#333}
 .creative-page .journey-curve path{stroke:#888}

@@ -23,8 +23,7 @@ function PlaybackIcon({ paused }) {
 
 export default function ParticleHero() {
   const section = useRef(null), modeRef = useRef('opening');
-  const [menu, setMenu] = useState(false), [backgroundPaused, setBackgroundPaused] = useState(false);
-  const [failed, setFailed] = useState(false), [liveReady, setLiveReady] = useState(false);
+  const [menu, setMenu] = useState(false), [liveReady, setLiveReady] = useState(false);
   const firstLiveFrame = useRef(false);
   const [debug] = useState(() => Boolean(DebugPanel) && new URLSearchParams(location.search).has('debug'));
   const paintTime = useCallback((time, settled = false) => {
@@ -63,7 +62,7 @@ export default function ParticleHero() {
       <img className="opening-poster" src={opening.portrait ? OPENING.portraitPoster : OPENING.poster} alt="" fetchPriority="high" />
       {opening.liveMounted && <div className={`opening-live${liveReady ? ' is-ready' : ''}`}>
         <div className="opening-live-frame">
-          <MarketHero apiRef={heroApi} paused={!ready || backgroundPaused} reduced={opening.reduced} startTime={OPENING.duration} onFrame={onLiveFrame} onUnavailable={() => setFailed(true)} />
+          <MarketHero apiRef={heroApi} paused={!ready} reduced={opening.reduced} startTime={OPENING.duration} onFrame={onLiveFrame} />
         </div>
       </div>}
       <div className={`opening-video-layer${ready ? ' is-finished' : ''}`}>
@@ -108,14 +107,6 @@ export default function ParticleHero() {
         <a className="particle-button particle-button-light" href="#research">查看研究<Arrow straight /></a>
         <a className="particle-button particle-button-dark" href="#about">关于我<Arrow straight /></a>
       </div>
-    </div>
-    <div className="particle-bottom" inert={!showSite} aria-hidden={!showSite}>
-      <a href={MACRO} target="_blank" rel="noreferrer" className="particle-field"><span>宏观利率</span><span>MACRO & RATES</span><Arrow /></a>
-      <a href="/csi500/" className="particle-field"><span>量化策略</span><span>QUANTITATIVE RESEARCH</span><Arrow /></a>
-      <a href="https://joyzen2.github.io/ai-research/" target="_blank" rel="noreferrer" className="particle-field"><span>AI 投研工具</span><span>RESEARCH AGENTS</span><Arrow /></a>
-      <button type="button" className="particle-playback" onClick={() => setBackgroundPaused(value => !value)} disabled={!ready || failed || opening.reduced} aria-pressed={backgroundPaused} aria-label={failed || opening.reduced ? '背景使用静态曲面' : backgroundPaused ? '播放背景动画' : '暂停背景动画'}>
-        <PlaybackIcon paused={backgroundPaused || failed || opening.reduced} /><span>{failed || opening.reduced ? '静态' : backgroundPaused ? '播放' : '暂停'}</span>
-      </button>
     </div>
     {debug && ready && <Suspense fallback={null}><DebugPanel api={heroApi} /></Suspense>}
   </section>;

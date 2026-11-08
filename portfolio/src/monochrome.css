@@ -5,9 +5,10 @@ html:has(.creative-page){background:#000;scrollbar-color:#666 #000}
 .creative-page .profile-action-secondary{color:#eee;border-color:#777}
 .creative-page .profile-current a{color:#ccc;border-color:#444}
 .creative-page .profile-current a:hover,.creative-page .profile-card__contact:hover{background:#222;border-color:#888}
-.creative-page .life-frame .profile-card__body,.creative-page .journey-card,.creative-page .journey-back,.creative-page .gallery-card-copy,.creative-page .work-carousel-fallback button{background:#111}
-.creative-page .gallery-card-writing,.creative-page .gallery-card-copy[data-art=banner] .gallery-card-writing{background:linear-gradient(transparent,#111 20%,#111)}
-.creative-page .gallery-card-copy[data-art=conference] .gallery-card-writing,.creative-page .gallery-card-copy[data-art=competition] .gallery-card-writing{background:linear-gradient(transparent,#111 20%,#111)}
+.creative-page .life-frame .profile-card__body,.creative-page .journey-card,.creative-page .journey-back,.creative-page .work-carousel-fallback button{background:#111}
+.creative-page .gallery-card-copy{background:var(--card-tone,#111)}
+.creative-page .gallery-card-writing,.creative-page .gallery-card-copy[data-art=banner] .gallery-card-writing{background:linear-gradient(transparent,var(--card-tone,#111) 20%,var(--card-tone,#111))}
+.creative-page .gallery-card-copy[data-art=conference] .gallery-card-writing,.creative-page .gallery-card-copy[data-art=competition] .gallery-card-writing{background:linear-gradient(transparent,var(--card-tone,#111) 20%,var(--card-tone,#111))}
 .creative-page .gallery-image-typography{background:linear-gradient(180deg,rgba(0,0,0,.4),rgba(0,0,0,.04))}
 .creative-page .gallery-card-writing p,.creative-page .profile-intro,.creative-page .journey-back-description{color:#c9c9c9}
 .creative-page .gallery-card-writing>span,.creative-page .gallery-card-writing .gallery-card-points,.creative-page .journey-date,.creative-page .journey-type,.creative-page .journey-return,.creative-page .research-carousel-intro p,.creative-page .research-project-tabs button,.creative-page .recognition-index button{color:#b9b9b9}

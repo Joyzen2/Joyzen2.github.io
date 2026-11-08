@@ -636,6 +636,8 @@ const CircularGallery = ({
               image.draggable = false;
               image.className = 'gallery-card-image';
               entry.cover.dataset.art = card.item.art || 'photo';
+              // The writing continues in a colour taken from the card's own picture.
+              entry.cover.style.setProperty('--card-tone', card.item.tone || '');
               const content = document.createElement('div');
               content.className = 'gallery-card-writing';
               const title = document.createElement('h3');
